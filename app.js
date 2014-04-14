@@ -6,9 +6,10 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var util = require('util');
+var graph = require('fbgraph');
+var querystring = require('querystring');
+var _ = require('underscore');
 
-var routes = require('./routes');
-var users = require('./routes/user');
 
 var app = express();
 
@@ -25,16 +26,12 @@ app.use(require('less-middleware')({ src: path.join(__dirname, 'public') }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(app.router);
 
-app.get('/', routes.index);
-app.get('/users', users.list);
-app.get('/instagram/subscribe', function(req, res){
-	Instagram.subscriptions.handshake(req, res); 
-});
-app.post('/instagram/subscribe', function(req, res){
-	console.log(req.body);
-	res.send(200);
-});
+var base_url = "http://5bfdf00d.ngrok.com";
+var font = util.format("%s/fonts/HelveticaNeueLTCom-Roman.ttf", __dirname);
 
+app.get('/', function(req, res){
+	res.render('index', {'title': "UD Story Daemon"})
+});
 
 
 /// catch 404 and forwarding to error handler
@@ -67,28 +64,27 @@ app.use(function(err, req, res, next) {
 });
 
 
-var Instagram = require('./modules/Instagram');
 
-var options = {
-	client_id: 'cb0179f1cd5d47cd92d544e5a750f087', 
-	client_secret: '0861e8916e954e58bb8d44e849fe7698',
-	tag: 'loris',
-	directory: util.format("%s/instagram", __dirname),
-	font: util.format("%s/fonts/HelveticaNeueLTCom-Roman.ttf", __dirname)
-}
-var instagram = new Instagram(options);
-instagram.poll(function(err){
+var Instagram = require('./modules/Instagram');
+var Facebook = require('./modules/Facebook')
+var config = require('./config')
+
+
+var instagram = new Instagram(config.instagram);
+instagram.poll(config.tag, function(err){
 	if(err) console.log(err);
 	else console.log("instagram.poll done");
 });
 
 
-var Facebook = require('./modules/Facebook');
-var facebook = new Facebook();
-facebook.poll(function(err){
+var facebook = new Facebook(config.facebook);
+facebook.poll(config.tag, function( err){
 	if(err) console.log(err);
 	else console.log("facebook.poll done");
 });
+
+
+
 
 
 

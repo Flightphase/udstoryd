@@ -1,23 +1,34 @@
 var util = require('util');
 var request = require('request');
 var storage = require('node-persist');
-var querystring = require('querystring');
+var qs = require('querystring');
 var async = require('async');
 var fs = require('fs');
-var gm = require('gm');
-var wrap = require('wordwrap')(50);
+// var gm = require('gm');
+// var wrap = require('wordwrap')(50);
 
 storage.initSync();
 
 var Instagram = function(options) {
 
+	if(!options.hasOwnProperty('client_id'))
+		throw new Exception('Must provide a client_id');
+
+	if(!options.hasOwnProperty('client_secret'))
+		throw new Exception('Must provide a client_id');
+
+
 	var self = this;
 	var client_id = options.client_id;
 	var client_secret = options.client_secret;
 	var endpoint = "https://api.instagram.com/v1";
-	var tag = options.tag || "blue";
-	var directory = options.directory || "./instagram";
-	var font = options.font || null;
+	var directory = options.download_dir;
+
+
+	fs.exists(directory, function(exists) {
+		if (!exists) fs.mkdir(directory);
+	});
+
 
 	this.fetch_json = function(url, callback) {
 		request(url, function (error, response, body) {
@@ -37,6 +48,7 @@ var Instagram = function(options) {
 		});
 	}
 
+	/*
 	this.make_caption = function(media, callback){
 		if(media.caption) {
 			var id = media.id;
@@ -57,6 +69,7 @@ var Instagram = function(options) {
 			callback();
 		}
 	}
+	*/
 
 	this.download_image = function(media, callback) {
 		var id = media.id;
@@ -77,7 +90,7 @@ var Instagram = function(options) {
 		}); 
 	}
 
-
+	/*
 	this.process_media = function(media, callback) {
 
 		var make_caption = function(next){ self.make_caption(media, next); };
@@ -85,40 +98,37 @@ var Instagram = function(options) {
 
 		async.parallel([download_image, make_caption], callback);
 	}
-
+	*/
 
 	this.process_url = function(url, set_min_tag_id, level, callback) {
 		callback = callback || function(){}
 		console.log(util.format("%s => %s", level, url));
-		if(level>1) {
-			callback("Too deep!");
-			return;
-		}
 
 		this.fetch_json(url, function(err, result){
 			if(err) callback(err);
 			else {
-				if(result.pagination.hasOwnProperty('next_url'))
-					self.process_url(result.pagination.next_url, false, level+1);
+				//if(result.pagination.hasOwnProperty('next_url'))
+				//	self.process_url(result.pagination.next_url, false, level+1);
 
 				if(set_min_tag_id) 
 					storage.setItem("instagram", {'min_tag_id': result.pagination.min_tag_id });
 
-				async.eachSeries(result.data, self.process_media, callback);
+				async.eachSeries(result.data, self.download_image, callback);
 			}
 		});
 	}
 
 	// http://stackoverflow.com/questions/20625173/how-does-instagrams-get-tags-tag-media-recent-pagination-actually-work
-	this.poll = function(callback) {
+	this.poll = function(tag, callback) {
 		
 		var options = {'client_secret': client_secret, 'client_id': client_id};
 		if(storage.getItem('instagram')) 
 			options.min_tag_id = storage.getItem('instagram').min_tag_id;
 
-		var url = util.format("%s/tags/%s/media/recent?%s", endpoint, tag, querystring.stringify(options));
+		var url = util.format("%s/tags/%s/media/recent?%s", endpoint, tag, qs.stringify(options));
 		self.process_url(url, true, 0, callback);
 	}
+
 }
 
 module.exports = Instagram;
