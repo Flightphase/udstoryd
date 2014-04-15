@@ -6,9 +6,16 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var util = require('util');
-var graph = require('fbgraph');
+var path = require("path");
+var glob = require("glob");
+var async = require("async");
+var gm = require('gm');
+var wrap = require('wordwrap')(25);
 var querystring = require('querystring');
-var _ = require('underscore');
+var ExifImage = require('./modules/ExifImage');
+var Instagram = require('./modules/Instagram');
+var Facebook = require('./modules/Facebook');
+var config = require('./config')
 
 
 var app = express();
@@ -30,7 +37,32 @@ var base_url = "http://5bfdf00d.ngrok.com";
 var font = util.format("%s/fonts/HelveticaNeueLTCom-Roman.ttf", __dirname);
 
 app.get('/', function(req, res){
-	res.render('index', {'title': "UD Story Daemon"})
+    var pattern = config.download_dir+"/*.jpg";
+    glob(pattern, {}, function(err, files){
+        var photos = files.map(function(file){
+            return '/img?name='+path.basename(file, ".jpg");
+        });
+        res.render('index', {'title': "UD Story Daemon", 'photos': photos});
+    });
+});
+
+app.get('/img', function(req, res){
+    var file = util.format('%s/%s.jpg', config.download_dir, req.query.name);
+    var img = new ExifImage(file);
+    img.getAll(function(err, tags){
+        res.set('Content-Type', 'image/jpeg'); // set the header here
+        gm(file)
+        	.fill("#FFFFFF")
+			.fontSize(24)
+			.font(font)
+			.drawText(5, 60, tags[0].Artist)
+			.drawText(5, 80, wrap(tags[0].Comment))
+        	.stream(function (err, stdout, stderr) {
+        		stdout.pipe(res)
+       		});
+    });
+
+    //res.sendfile(file);
 });
 
 /// catch 404 and forwarding to error handler
@@ -64,9 +96,6 @@ app.use(function(err, req, res, next) {
 
 
 
-var Instagram = require('./modules/Instagram');
-var Facebook = require('./modules/Facebook');
-var config = require('./config')
 
 
 

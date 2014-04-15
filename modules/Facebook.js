@@ -96,15 +96,15 @@ var Facebook = function(options) {
 
 					//console.log(util.format(media));
 					var img = new ExifImage(local_path);
-					var tags = {"Artist": post.from.name};
-					if(post.message)
-						tags.Comment = post.message;
 				
-					//console.log(tags);
-					img.setObj(tags, function(){
-						img.printTags();
-						callback();
-					});
+					var tags = {
+						"Comment": post.message || "", 
+						"Artist": post.from.name, 
+						"OwnerName": self.name,
+						"ImageDescription": page_id
+					};
+
+					img.setObj(tags, callback);
 				});
 				writeStream.on('error', callback);
 				request(url).pipe(writeStream);

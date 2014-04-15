@@ -6,8 +6,6 @@ var async = require('async');
 var fs = require('fs');
 var ExifImage = require('./ExifImage');
 
-// var gm = require('gm');
-// var wrap = require('wordwrap')(50);
 
 storage.initSync();
 
@@ -114,13 +112,11 @@ var Instagram = function(options) {
 					var tags = {
 						"Comment": media.caption.text, 
 						"Artist": media.user.username, 
-						"ImageDescription": media.tags.join()
+						"OwnerName": self.name,
+						"ImageDescription": query
 					};
 					//console.log(tags);
-					img.setObj(tags, function(){
-						img.printTags();
-						callback();
-					});
+					img.setObj(tags, callback);
 				});
 				writeStream.on('error', callback);
 				request(url).pipe(writeStream);

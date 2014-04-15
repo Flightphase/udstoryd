@@ -14,9 +14,13 @@ exec("which exiftool", function(err, stdout, stderr){
 var ExifImage = function(filename) {
 
 	var self = this;
-	var valid_tags = ["Comment", "UserComment", "ImageNumber", 
-		"OwnerName", "ImageWidth", "ImageHeight", "ImageDescription", 
-		"Artist", "Software"];
+	var valid_tags = [
+		"ImageNumber", 
+		"OwnerName", 			// The service from whence the image came
+		"ImageDescription", 	// The query that was used to fetch the image
+		"Artist",				// The user who uploaded the image
+		"Comment", 				// The text that goes along with the image
+	];
 
 
 
@@ -79,7 +83,8 @@ var ExifImage = function(filename) {
 	}
 
 	self.getAll = function(callback) {
-
+		callback = callback || function(){}
+		
 		var cmd = util.format('exiftool -json "%s"', filename);
 		exec(cmd, function (err, stdout, stderr) {
 			if (err) callback(err)
