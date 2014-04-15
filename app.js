@@ -33,7 +33,6 @@ app.get('/', function(req, res){
 	res.render('index', {'title': "UD Story Daemon"})
 });
 
-
 /// catch 404 and forwarding to error handler
 app.use(function(req, res, next) {
     var err = new Error('Not Found');
@@ -76,7 +75,7 @@ var facebook = new Facebook(config.facebook);
 
 
 instagram.start();
-//facebook.start();
+facebook.start();
 
 
 

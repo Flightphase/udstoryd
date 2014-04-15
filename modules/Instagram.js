@@ -32,7 +32,6 @@ var Instagram = function(options) {
 	var query = options.query;
 	
 
-
 	fs.exists(directory, function(exists) {
 		if (!exists) fs.mkdir(directory);
 	});
@@ -107,6 +106,7 @@ var Instagram = function(options) {
 				callback();
 			} else {
 				console.log(local_path);
+
 				var writeStream = fs.createWriteStream(local_path);
 				writeStream.on('close', function(){
 					//console.log(util.format(media));
@@ -130,7 +130,7 @@ var Instagram = function(options) {
 
 	this.process_url = function(url, set_min_tag_id, level, callback) {
 		callback = callback || function(){}
-		console.log(util.format("%s => %s", level, url));
+		//console.log(util.format("%s => %s", level, url));
 
 		this.fetch_json(url, function(err, result){
 			if(err) callback(err);
@@ -142,7 +142,8 @@ var Instagram = function(options) {
 					self.settings.min_tag_id = result.pagination.min_tag_id;
 					storage.setItem("instagram", self.settings);
 				}
-				
+				if(result.data.length) console.log("Instagram: Found "+result.data.length+" results");
+
 				async.eachSeries(result.data, self.download_image, callback);
 			}
 		});
@@ -150,7 +151,7 @@ var Instagram = function(options) {
 
 	// http://stackoverflow.com/questions/20625173/how-does-instagrams-get-tags-tag-media-recent-pagination-actually-work
 	this.poll = function(callback) {
-		
+		//console.log('instagram.poll');
 		var options = {
 			'client_secret': client_secret, 
 			'client_id': client_id, 

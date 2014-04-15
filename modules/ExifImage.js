@@ -29,6 +29,7 @@ var ExifImage = function(filename) {
 	* Set tags with a JavaScript object keys and values
 	*/
 	self.setObj = function(tags, callback) {
+		console.log(tags);
 		async.each(Object.keys(tags), function(tag, next){
 			self.set(tag, tags[tag], next);
 		}, callback);
@@ -41,6 +42,9 @@ var ExifImage = function(filename) {
 	self.set = function(tag, value, callback) {
 		if(valid_tags.indexOf(tag)==-1) {
 			callback("'"+tag+"'' is not a valid tag");
+		} else if(!value) {
+			console.log("No value provided for "+tag+". Skipping.");
+			callback();
 		} else {
 			var cmd = util.format('exiftool -overwrite_original_in_place -%s="%s" "%s"', tag, escapeshell(value), filename);
 			exec(cmd, callback);

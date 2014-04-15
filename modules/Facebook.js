@@ -30,6 +30,7 @@ var Facebook = function(options) {
 	var access_token = null;
 	var client_id = options.client_id;
 	var client_secret = options.client_secret;
+	var page_id = options.page_id;
 	var query = options.query;
 	var directory = options.download_dir;
 
@@ -73,29 +74,15 @@ var Facebook = function(options) {
 
 	this.process_post = function(post, callback) {
 
-		// var post_date = new Date(post.created_time);
-		// var last_poll = new Date(settings.last_poll);
-
-		console.log("== "+post.from.name);
-
-		// if(post_date < last_poll) {
-		// 	console.log("photo too old!");
-		// 	callback()
-		// 	return;
-		// }
-		if(!post.hasOwnProperty("picture")) {
+		if(!post.hasOwnProperty('full_picture')) {
 			console.log("not a photo");
 			callback();
 			return;
 		}
 
-
-		if(!post.hasOwnProperty('picture'))
-			throw new Exception("No picture found in photo post!");
-
 		console.log(util.inspect(post));
 		var id = post.id;
-		var url = post.picture;
+		var url = post.full_picture;
 		var local_path = util.format("%s/%s.jpg", directory, id);
 
 		fs.exists(local_path, function(exists){
@@ -106,12 +93,18 @@ var Facebook = function(options) {
 				console.log(local_path);
 				var writeStream = fs.createWriteStream(local_path);
 				writeStream.on('close', function(){
-					//console.log(util.format(post));
-					console.log(post.from.name);
-					console.log(post.caption);
-					console.log(post.description);
-					console.log(post.name);
-					callback();
+
+					//console.log(util.format(media));
+					var img = new ExifImage(local_path);
+					var tags = {"Artist": post.from.name};
+					if(post.message)
+						tags.Comment = post.message;
+				
+					//console.log(tags);
+					img.setObj(tags, function(){
+						img.printTags();
+						callback();
+					});
 				});
 				writeStream.on('error', callback);
 				request(url).pipe(writeStream);
@@ -131,25 +124,23 @@ var Facebook = function(options) {
 			return;
 		}
 
-		console.log("facebook.poll");
+		//console.log("facebook.poll");
 	
 		var data = {
-			q: query, 
-			fields: "id,name,type,created_time,from,picture",
-			return_ssl_resources: 1,
-			metadata: 1,
-			type: 'post', 
+			fields: "id,name,type,created_time,from,full_picture,message",
 			access_token: access_token, 
 			since: Math.floor(new Date(self.settings.last_poll).getTime()/1000) 
 		};
-		var request = '/search?'+qs.stringify(data);
-		console.log(request);
+
+		var request = util.format('/%s/feed?%s', page_id, qs.stringify(data));
+		//console.log(request);
 
 		graph.get(request, function(err, res){
 			if(err) callback(err);
 			else {
 
-				console.log("found "+res.data.length+" posts")
+				if(res.data.length) console.log("Facebook: found "+res.data.length+" posts");
+
 				async.eachSeries(res.data, self.process_post, function(err){
 					if(err) console.log(err);
 					else {
