@@ -66,22 +66,17 @@ app.use(function(err, req, res, next) {
 
 
 var Instagram = require('./modules/Instagram');
-var Facebook = require('./modules/Facebook')
+var Facebook = require('./modules/Facebook');
 var config = require('./config')
 
 
+
 var instagram = new Instagram(config.instagram);
-instagram.poll(config.tag, function(err){
-	if(err) console.log(err);
-	else console.log("instagram.poll done");
-});
-
-
 var facebook = new Facebook(config.facebook);
-facebook.poll(config.tag, function( err){
-	if(err) console.log(err);
-	else console.log("facebook.poll done");
-});
+
+
+instagram.start();
+//facebook.start();
 
 
 
