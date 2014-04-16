@@ -23,13 +23,12 @@ var Facebook = function(options) {
 	self.settings = storage.getItem('facebook') || { last_poll: (new Date()).getDate()-7 };
 	
 
-	var polling_interval_ref = null;
 	var polling_interval = 5000;
 	this.start = function() {
 		var _poll = function(err){
 			self.poll(function(err){
 				if(err) console.log(err);
-				else polling_interval_ref = setTimeout(_poll, polling_interval);
+				else setTimeout(_poll, polling_interval);
 			});
 		}
 		_poll();

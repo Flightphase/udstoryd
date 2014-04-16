@@ -10,11 +10,13 @@ var path = require("path");
 var glob = require("glob");
 var async = require("async");
 var gm = require('gm');
-var wrap = require('wordwrap')(25);
 var querystring = require('querystring');
+var wrap = require('wordwrap')(35);
+
 var TileImage = require('./modules/TileImage');
 var Instagram = require('./modules/Instagram');
 var Facebook = require('./modules/Facebook');
+var Twitter = require('./modules/Twitter');
 var config = require('./config')
 
 
@@ -68,6 +70,17 @@ app.get('/img', function(req, res){
     });
 });
 
+app.get('/test', function(req, res){
+	var size = {width: 110, height: 110};
+	gm("Dog.jpg")
+		.resize(size.width+"^", size.height+"^")
+		.gravity('Center')
+		.crop(size.width, size.height)
+		.stream(function (err, stdout, stderr) {
+			stdout.pipe(res)
+		});
+});
+
 /// catch 404 and forwarding to error handler
 app.use(function(req, res, next) {
     var err = new Error('Not Found');
@@ -98,13 +111,14 @@ app.use(function(err, req, res, next) {
 });
 
 
-
-
 var instagram = new Instagram();
 var facebook = new Facebook();
+var twitter = new Twitter();
 
 instagram.start();
 facebook.start();
+//twitter.start();
+
 
 
 module.exports = app;

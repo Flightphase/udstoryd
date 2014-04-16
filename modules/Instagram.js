@@ -22,15 +22,12 @@ var Instagram = function() {
 	self.settings = storage.getItem("instagram") || {min_tag_id: null};
 
 
-	var polling_interval_ref = null;
 	var polling_interval = 5000;
-
 	this.start = function() {
 		var _poll = function(err){
 			self.poll(function(err){
 				if(err) console.log(err);
-				else 
-					polling_interval_ref = setTimeout(_poll, polling_interval);
+				else setTimeout(_poll, polling_interval);
 			});
 		}
 		_poll();
@@ -56,11 +53,15 @@ var Instagram = function() {
 	}
 
 	this.process_item = function(media, callback) {
+		var text = "";
+		if(media.hasOwnProperty('caption') && media.caption) {
+			text = media.caption.text;
+		}
 
 		var info = {
 			"id": media.id,
+			"text": text,
 			"url": media.images.low_resolution.url,
-			"text": media.caption.text,
 			"author": media.user.username,
 			"source": "Instagram",
 			"date": new Date(parseInt(media.created_time) * 1000)
@@ -95,17 +96,19 @@ var Instagram = function() {
 	// http://stackoverflow.com/questions/20625173/how-does-instagrams-get-tags-tag-media-recent-pagination-actually-work
 	this.poll = function(callback) {
 		
-
 		var query = config.instagram.query;
-		var endpoint = "https://api.instagram.com/v1";
 		//console.log('instagram.poll');
+
 		var options = {
 			'client_secret': config.instagram.client_secret, 
-			'client_id': config.instagram.client_id, 
-			'min_tag_id': self.settings.min_tag_id
+			'client_id': config.instagram.client_id
 		};
 
-		var url = util.format("%s/tags/%s/media/recent?%s", endpoint, query, qs.stringify(options));
+		if(self.settings.min_tag_id)
+			options.min_tag_id = self.settings.min_tag_id;
+
+		var url = util.format("https://api.instagram.com/v1/tags/%s/media/recent?%s", query, qs.stringify(options));
+		//console.log(url);
 		self.process_url(url, true, 0, callback);
 	}
 }

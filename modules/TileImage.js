@@ -24,33 +24,38 @@ var TileImage = function(options) {
 	
 	// http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html
 
-
 	self.download = function(options, callback) {
 		self.local_path = util.format("%s/%s.jpg", config.download_dir, options.id);
+		
+		if(fs.existsSync(self.local_path)) {
+			console.log("WARNING: fetched an image twice!");
+			callback();
+			return;
+		}
+
 		console.log(self.local_path);
 
-		var size = {width: 220, height: 220};
+		var size = { width: 220, height: 220 };
 		var color = colors[Math.floor(Math.random()*colors.length)];
 
-		var get_small = function(done) {
+		var download_small = function(done) {
 			//console.log("get_small");
 			gm(request(options.url))
-				.resize(size.width, size.height + ">")
+				.resize(size.width+"^", size.height+"^")
 				.gravity('Center')
-				.extent(size.width, size.height)
+				.crop(size.width, size.height)
 				.fill(color)
 				.drawRectangle(0, 0, size.width*0.1, size.height)
 				.write(self.local_path, done);
 		}
 
-
 		// to do: combine this into one command!
 		var set_tags = function(done){
 			//console.log("set_tags");
 			var tags = {
+				"Headline": util.format("%s: %s", options.source, options.author), 
 				"Comment": options.text, 
 				"Caption": options.text, 
-				"Headline": util.format("%s: %s", options.source, options.author), 
 				"UserComment": options.text,
 				"ImageDescription": options.text,
 				"Artist": options.author, 
@@ -64,12 +69,11 @@ var TileImage = function(options) {
 			}, done);
 		}
 
-
 		var make_caption = function(done) {
 			//console.log("make_caption");
 			var captions_path = util.format('%s/%s.png', config.captions_dir, options.id);
-			var text =wrap(options.text) +"\n by "+ options.author;
-
+			var text = wrap(options.text).split("\n").slice(0, 5).join("\n");
+			text += "\nby "+ options.author;
 			gm(size.width*2, size.height, color)
 				.fill("#FFFFFF")
 				.fontSize(28)
@@ -78,17 +82,8 @@ var TileImage = function(options) {
 				.write(captions_path, done);
 		}
 
-		fs.exists(self.local_path, function(exists){
-			if(exists) {
-				console.log("WARNING: fetched an image twice!");
-				callback();
-			} else  {
-				async.series([get_small, set_tags, make_caption], callback);
-			}
-		});
+		async.series([download_small, set_tags, make_caption], callback);
 	}
-
-
 
 
 	/**
@@ -100,6 +95,7 @@ var TileImage = function(options) {
 		var cmd = util.format("exiftool -overwrite_original_in_place -%s=$'%s' $'%s'", tag, value, self.local_path);
 		exec(cmd, callback);
 	}
+
 
 	/**
 	*	Get a single EXIF tag
