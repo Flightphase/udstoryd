@@ -4,36 +4,22 @@ var storage = require('node-persist');
 var qs = require('querystring');
 var async = require('async');
 var fs = require('fs');
-var ExifImage = require('./ExifImage');
+var TileImage = require('./TileImage');
+var config = require('../config');
 
 
 storage.initSync();
 
-var Instagram = function(options) {
+var Instagram = function() {
 
-	if(!options.hasOwnProperty('client_id'))
+	if(!config.instagram.hasOwnProperty('client_id'))
 		throw new Exception('Must provide a client_id');
 
-	if(!options.hasOwnProperty('client_secret'))
+	if(!config.instagram.hasOwnProperty('client_secret'))
 		throw new Exception('Must provide a client_id');
-
 
 	var self = this;
-	self.name = "Instagram";
 	self.settings = storage.getItem("instagram") || {min_tag_id: null};
-
-
-	var client_id = options.client_id;
-	var client_secret = options.client_secret;
-	var endpoint = "https://api.instagram.com/v1";
-	var directory = options.download_dir;
-	var query = options.query;
-	
-
-	fs.exists(directory, function(exists) {
-		if (!exists) fs.mkdir(directory);
-	});
-
 
 
 	var polling_interval_ref = null;
@@ -69,59 +55,19 @@ var Instagram = function(options) {
 		});
 	}
 
-	/*
-	this.make_caption = function(media, callback){
-		if(media.caption) {
-			var id = media.id;
-			var user = media.user.username;
-			var caption = media.caption.text; 
-			var local_path = util.format("%s/%s_caption.png", directory, id);
-			var width = 220 * 5;
-			var height = 110 * 5;
-			
-			var img = gm(width, height, "#ddff99")
-				.fill("#000000")
-				.fontSize(64);
+	this.process_item = function(media, callback) {
 
-			if(font) img.font(font);
-			img.drawText(10, 80, wrap(caption));
-			img.write(local_path, callback);
-		} else {
-			callback();
-		}
-	}
-	*/
+		var info = {
+			"id": media.id,
+			"url": media.images.low_resolution.url,
+			"text": media.caption.text,
+			"author": media.user.username,
+			"source": "Instagram",
+			"date": new Date(parseInt(media.created_time) * 1000)
+		};
 
-	this.download_image = function(media, callback) {
-		var id = media.id;
-		var url = media.images.low_resolution.url;
-		//var created_time = new Date(parseInt(media.created_time) * 1000);
-		var local_path = util.format("%s/%s.jpg", directory, id);
-
-		fs.exists(local_path, function(exists){
-			if(exists) {
-				console.log("WARNING: encountered an image twice!");
-				callback();
-			} else {
-				console.log(local_path);
-
-				var writeStream = fs.createWriteStream(local_path);
-				writeStream.on('close', function(){
-					//console.log(util.format(media));
-					var img = new ExifImage(local_path);
-					var tags = {
-						"Comment": media.caption.text, 
-						"Artist": media.user.username, 
-						"OwnerName": self.name,
-						"ImageDescription": query
-					};
-					//console.log(tags);
-					img.setObj(tags, callback);
-				});
-				writeStream.on('error', callback);
-				request(url).pipe(writeStream);
-			}
-		}); 
+		var image = new TileImage();
+		image.download(info, callback);
 	}
 
 	this.process_url = function(url, set_min_tag_id, level, callback) {
@@ -138,26 +84,30 @@ var Instagram = function(options) {
 					self.settings.min_tag_id = result.pagination.min_tag_id;
 					storage.setItem("instagram", self.settings);
 				}
-				if(result.data.length) console.log("Instagram: Found "+result.data.length+" results");
+				if(result.data.length) 
+					console.log("Instagram: Found "+result.data.length+" results");
 
-				async.eachSeries(result.data, self.download_image, callback);
+				async.eachSeries(result.data, self.process_item, callback);
 			}
 		});
 	}
 
 	// http://stackoverflow.com/questions/20625173/how-does-instagrams-get-tags-tag-media-recent-pagination-actually-work
 	this.poll = function(callback) {
+		
+
+		var query = config.instagram.query;
+		var endpoint = "https://api.instagram.com/v1";
 		//console.log('instagram.poll');
 		var options = {
-			'client_secret': client_secret, 
-			'client_id': client_id, 
+			'client_secret': config.instagram.client_secret, 
+			'client_id': config.instagram.client_id, 
 			'min_tag_id': self.settings.min_tag_id
 		};
 
 		var url = util.format("%s/tags/%s/media/recent?%s", endpoint, query, qs.stringify(options));
 		self.process_url(url, true, 0, callback);
 	}
-
 }
 
 module.exports = Instagram;

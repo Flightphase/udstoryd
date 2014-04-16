@@ -5,40 +5,23 @@ var request = require('request');
 var qs = require('querystring');
 var async = require('async');
 var fs = require('fs');
-var ExifImage = require('./ExifImage');
+var TileImage = require('./TileImage');
+var config = require('../config');
 
 
 storage.initSync();
 
-// TO DO: Search only photos on the Dayton page...
-
-
-
 var Facebook = function(options) {
 
-	if(!options.hasOwnProperty('client_id'))
+	if(!config.facebook.hasOwnProperty('client_id'))
 		throw new Exception('Must provide a client_id');
 
-	if(!options.hasOwnProperty('client_secret'))
+	if(!config.facebook.hasOwnProperty('client_secret'))
 		throw new Exception('Must provide a client_id');
 
 	var self = this;
-	self.name = "Facebook";
 	self.settings = storage.getItem('facebook') || { last_poll: (new Date()).getDate()-7 };
-
-
-	var access_token = null;
-	var client_id = options.client_id;
-	var client_secret = options.client_secret;
-	var page_id = options.page_id;
-	var query = options.query;
-	var directory = options.download_dir;
-
-	fs.exists(directory, function(exists) {
-		if (!exists) fs.mkdir(directory);
-	});
-
-
+	
 
 	var polling_interval_ref = null;
 	var polling_interval = 5000;
@@ -53,10 +36,11 @@ var Facebook = function(options) {
 	}
 
 
+	var access_token = null;
 	this.get_access_token = function(done) {
 		var query = {
-			  client_id: client_id
-			, client_secret: client_secret
+			  client_id: config.facebook.client_id
+			, client_secret: config.facebook.client_secret
 			, grant_type: "client_credentials"
 		};
 
@@ -65,7 +49,7 @@ var Facebook = function(options) {
 			if(err) done(err)
 			else {
 				access_token = res.access_token;
-				console.log("got facebook access token: "+access_token)
+				//console.log("got facebook access token: "+access_token)
 				done();
 			}
 		});
@@ -75,42 +59,23 @@ var Facebook = function(options) {
 	this.process_post = function(post, callback) {
 
 		if(!post.hasOwnProperty('full_picture')) {
-			console.log("not a photo");
 			callback();
 			return;
 		}
 
-		console.log(util.inspect(post));
-		var id = post.id;
-		var url = post.full_picture;
-		var local_path = util.format("%s/%s.jpg", directory, id);
+		var info = {
+			"id": post.id,
+			"url": post.full_picture,
+			"text": post.message || "None",
+			"author": post.from.name,
+			"source": "Facebook",
+			"date": new Date(post.created_time)
+		};
 
-		fs.exists(local_path, function(exists){
-			if(exists) {
-				console.log("WARNING: fetched an image twice!");
-				callback();
-			} else {
-				console.log(local_path);
-				var writeStream = fs.createWriteStream(local_path);
-				writeStream.on('close', function(){
-
-					//console.log(util.format(media));
-					var img = new ExifImage(local_path);
-				
-					var tags = {
-						"Comment": post.message || "", 
-						"Artist": post.from.name, 
-						"OwnerName": self.name,
-						"ImageDescription": page_id
-					};
-
-					img.setObj(tags, callback);
-				});
-				writeStream.on('error', callback);
-				request(url).pipe(writeStream);
-			}
-		}); 
+		var image = new TileImage();
+		image.download(info, callback);
 	}
+
 
 
 	this.poll = function(callback){
@@ -132,14 +97,14 @@ var Facebook = function(options) {
 			since: Math.floor(new Date(self.settings.last_poll).getTime()/1000) 
 		};
 
-		var request = util.format('/%s/feed?%s', page_id, qs.stringify(data));
+		var request = util.format('/%s/feed?%s', config.facebook.page_id, qs.stringify(data));
 		//console.log(request);
 
 		graph.get(request, function(err, res){
 			if(err) callback(err);
 			else {
-
-				if(res.data.length) console.log("Facebook: found "+res.data.length+" posts");
+				if(res.data.length) 
+					console.log("Facebook: found "+res.data.length+" posts");
 
 				async.eachSeries(res.data, self.process_post, function(err){
 					if(err) console.log(err);
@@ -147,7 +112,7 @@ var Facebook = function(options) {
 						if(res.data.length>0) {
 							self.settings.last_poll = new Date();
 							storage.setItem('facebook', self.settings);
-							console.log("settings.last_poll="+self.settings.last_poll);
+							//console.log("settings.last_poll="+self.settings.last_poll);
 						}
 						callback();
 					}
