@@ -98,7 +98,8 @@ var Instagram = function() {
 		
 		var query = config.instagram.query;
 		//console.log('instagram.poll');
-
+		process.stdout.write("ig-");
+		
 		var options = {
 			'client_secret': config.instagram.client_secret, 
 			'client_id': config.instagram.client_id

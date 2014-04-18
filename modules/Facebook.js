@@ -87,7 +87,7 @@ var Facebook = function(options) {
 			});
 			return;
 		}
-
+		process.stdout.write("fb-");
 		//console.log("facebook.poll");
 	
 		var data = {

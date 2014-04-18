@@ -4,7 +4,7 @@ var exec = require('child_process').exec;
 var async = require('async');
 var _ = require('underscore');
 var gm = require('gm');
-var wrap = require('wordwrap')(35);
+var wrap = require('wordwrap')(25);
 var request = require('request');
 var config = require('../config');
 
@@ -35,18 +35,26 @@ var TileImage = function(options) {
 
 		console.log(self.local_path);
 
-		var size = { width: 220, height: 220 };
-		var color = colors[Math.floor(Math.random()*colors.length)];
+		var size = { width: 110, height: 110 };
 
 		var download_small = function(done) {
-			//console.log("get_small");
+
+			var width = 110;
+			var height = 110;
 			gm(request(options.url))
-				.resize(size.width+"^", size.height+"^")
+				.resize(width+"^", height+"^")
 				.gravity('Center')
-				.crop(size.width, size.height)
-				.fill(color)
-				.drawRectangle(0, 0, size.width*0.1, size.height)
-				.write(self.local_path, done);
+				.crop(width, height)
+				.write(self.local_path, done)
+
+			//console.log("get_small");
+			// gm(request(options.url))
+			// 	.resize(size.width+"^", size.height+"^")
+			// 	.gravity('Center')
+			// 	.crop(size.width, size.height)
+			// 	.fill(color)
+			// 	.drawRectangle(0, 0, size.width*0.1, size.height)
+			// 	.write(self.local_path, done);
 		}
 
 		// to do: combine this into one command!
@@ -71,15 +79,23 @@ var TileImage = function(options) {
 
 		var make_caption = function(done) {
 			//console.log("make_caption");
+			var color = colors[Math.floor(Math.random()*colors.length)];
 			var captions_path = util.format('%s/%s.png', config.captions_dir, options.id);
-			var text = wrap(options.text).split("\n").slice(0, 5).join("\n");
-			text += "\nby "+ options.author;
-			gm(size.width*2, size.height, color)
-				.fill("#FFFFFF")
-				.fontSize(28)
-				.font(config.font)
-				.drawText(10, 30, text)
-				.write(captions_path, done);
+			var width = 220;
+			var height = 220;
+		    var img = gm(self.local_path)
+		        .gravity('NorthWest')
+		        .background(color)
+		        .extent(width, height)
+		        .fill(color)
+		        .drawRectangle(0, 0, 10, 110)
+		        .fontSize(18)
+		        .fill("#ffffff");
+		    if(options.text) img.font(config.font_bold)
+		        .drawText(10, 130, wrap(options.text).split("\n").slice(0,3).join("\n"));
+			img.font(config.font_medium)
+		        .drawText(10, height-15, "by "+options.author)
+		        .write(captions_path, done);
 		}
 
 		async.series([download_small, set_tags, make_caption], callback);
