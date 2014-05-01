@@ -117,33 +117,8 @@ var twitter = new Twitter();
 
 instagram.start();
 facebook.start();
-//twitter.start();
+twitter.start();
 
-
-// var width = 110;
-// var height = 110;
-// var text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
-// gm("Dog.jpg")
-//     .resize(width+"^", height+"^")
-//     .gravity('Center')
-//     .crop(width, height)
-//     .write("Dog-110x110.jpg", function(err, stdout, stderr, cmd){
-//         gm("Dog-110x110.jpg")
-//             .gravity('NorthWest')
-//             .background("#36cc24")
-//             .extent(width*2, height*2)
-//             .fill("#36cc24")
-//             .drawRectangle(0, 0, 10, height)
-//             .fontSize(18)
-//             .fill("#ffffff")
-//             .font(config.font_bold)
-//             .drawText(10, height+20, wrap(text).split("\n").slice(0,3).join("\n"))
-//             .font(config.font_medium)
-//             .drawText(10, (height*2)-15, "by Jeff")
-//             .write("Dog-caption.png", function(err, stdout, stderr, cmd){
-//                 if(err) console.log(err);
-//             });
-//     })
 
 
 

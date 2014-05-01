@@ -4,7 +4,7 @@ var exec = require('child_process').exec;
 var async = require('async');
 var _ = require('underscore');
 var gm = require('gm');
-var wrap = require('wordwrap')(25);
+var wrap = require('wordwrap')(20);
 var request = require('request');
 var config = require('../config');
 
@@ -89,7 +89,7 @@ var TileImage = function(options) {
 		        .extent(width, height)
 		        .fill(color)
 		        .drawRectangle(0, 0, 10, 110)
-		        .fontSize(18)
+		        .fontSize(20)
 		        .fill("#ffffff");
 		    if(options.text) img.font(config.font_bold)
 		        .drawText(10, 130, wrap(options.text).split("\n").slice(0,3).join("\n"));
