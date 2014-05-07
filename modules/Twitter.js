@@ -103,7 +103,7 @@ var Twitter = function() {
 
 		var options = (self.settings.refresh_url)
 			? qs.parse( self.settings.refresh_url.substr(1) )
-			: { q: 'lemur', count: 100 };
+			: { q: '#lemur', count: 100 };
 
 		T.get('search/tweets', options, function(err, data, response) {
 			if(err) callback(err)

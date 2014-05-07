@@ -91,10 +91,17 @@ var TileImage = function(options) {
 		        .drawRectangle(0, 0, 10, 110)
 		        .fontSize(20)
 		        .fill("#ffffff");
-		    if(options.text) img.font(config.font_bold)
+
+		    if(options.text) {
+		    	img.font(config.font_bold)
 		        .drawText(10, 130, wrap(options.text).split("\n").slice(0,3).join("\n"));
+			}
+			
 			img.font(config.font_medium)
+				.fontSize(20)
 		        .drawText(10, height-15, "by "+options.author)
+		        .fontSize(14)
+		        .drawText(120, 16, options.source)
 		        .write(captions_path, done);
 		}
 
