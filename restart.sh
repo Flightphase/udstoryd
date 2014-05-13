@@ -1,2 +1,3 @@
-./stop.sh;
-./start.sh;
+#!/bin/bash
+
+pm2 restart udstoryd
