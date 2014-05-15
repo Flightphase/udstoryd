@@ -12,12 +12,12 @@ var async = require("async");
 var gm = require('gm');
 var querystring = require('querystring');
 var wrap = require('wordwrap')(25);
-
 var TileImage = require('./modules/TileImage');
 var Instagram = require('./modules/Instagram');
 var Facebook = require('./modules/Facebook');
 var Twitter = require('./modules/Twitter');
 var config = require('./config')
+
 
 
 var app = express();
@@ -36,7 +36,28 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(app.router);
 
 
+
+
+var instagram = new Instagram();
+var facebook = new Facebook();
+var twitter = new Twitter();
+
+
+
+/**************************************************
+██████╗  ██████╗ ██╗   ██╗████████╗███████╗███████╗
+██╔══██╗██╔═══██╗██║   ██║╚══██╔══╝██╔════╝██╔════╝
+██████╔╝██║   ██║██║   ██║   ██║   █████╗  ███████╗
+██╔══██╗██║   ██║██║   ██║   ██║   ██╔══╝  ╚════██║
+██║  ██║╚██████╔╝╚██████╔╝   ██║   ███████╗███████║
+╚═╝  ╚═╝ ╚═════╝  ╚═════╝    ╚═╝   ╚══════╝╚══════╝
+**************************************************/                                                  
+
 app.get('/', function(req, res){
+    res.render('index', {'title': "udstoryd"});
+});
+
+app.get('/images', function(req, res){
     var pattern = config.download_dir+"/*.jpg";
     glob(pattern, {}, function(err, files){
         var photos = files.map(function(file){
@@ -45,6 +66,22 @@ app.get('/', function(req, res){
         res.render('index', {'title': "UD Story Daemon", 'photos': photos});
     });
 });
+
+app.get('/status/facebook', function(req, res){
+    if(facebook.running) res.send("ok");
+    else res.send("down");
+});
+
+app.get('/status/twitter', function(req, res){
+    if(twitter.running) res.send("ok");
+    else res.send("down");
+});
+
+app.get('/status/instagram', function(req, res){
+    if(instagram.running) res.send("ok");
+    else res.send("down");
+});
+
 
 app.get('/img', function(req, res){
     var local_path = util.format('%s/%s.jpg', config.download_dir, req.query.name);
@@ -70,16 +107,20 @@ app.get('/img', function(req, res){
     });
 });
 
-app.get('/test', function(req, res){
-	var size = {width: 110, height: 110};
-	gm("Dog.jpg")
-		.resize(size.width+"^", size.height+"^")
-		.gravity('Center')
-		.crop(size.width, size.height)
-		.stream(function (err, stdout, stderr) {
-			stdout.pipe(res)
-		});
-});
+
+
+
+
+
+
+/*****************************************************************
+██╗  ██╗ █████╗ ███╗   ██╗██████╗ ██╗     ███████╗██████╗ ███████╗
+██║  ██║██╔══██╗████╗  ██║██╔══██╗██║     ██╔════╝██╔══██╗██╔════╝
+███████║███████║██╔██╗ ██║██║  ██║██║     █████╗  ██████╔╝███████╗
+██╔══██║██╔══██║██║╚██╗██║██║  ██║██║     ██╔══╝  ██╔══██╗╚════██║
+██║  ██║██║  ██║██║ ╚████║██████╔╝███████╗███████╗██║  ██║███████║
+╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝╚══════╝
+*****************************************************************/                                                                
 
 /// catch 404 and forwarding to error handler
 app.use(function(req, res, next) {
@@ -110,14 +151,6 @@ app.use(function(err, req, res, next) {
     });
 });
 
-
-var instagram = new Instagram();
-var facebook = new Facebook();
-var twitter = new Twitter();
-
-instagram.start();
-facebook.start();
-twitter.start();
 
 
 

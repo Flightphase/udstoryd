@@ -6,6 +6,7 @@ var _ = require('underscore');
 var gm = require('gm');
 var wrap = require('wordwrap')(20);
 var request = require('request');
+
 var config = require('../config');
 
 exec("which exiftool", function(err, stdout, stderr){
@@ -20,7 +21,8 @@ var TileImage = function(options) {
 	options = options || {};
 	var self = this;
 	self.local_path = options.local_path || null;
-
+	
+	var logger = options.logger || console;
 	
 	// http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html
 
@@ -28,12 +30,11 @@ var TileImage = function(options) {
 		self.local_path = util.format("%s/%s.jpg", config.download_dir, options.id);
 		
 		if(fs.existsSync(self.local_path)) {
-			console.log("WARNING: fetched an image twice!");
-			callback();
-			return;
+			logger.warn("WARNING: fetched an image twice!");
 		}
-
-		console.log(self.local_path);
+		
+		logger.info("remote_url"+options.url);
+		logger.info("local_path="+self.local_path);
 
 		var size = { width: 110, height: 110 };
 

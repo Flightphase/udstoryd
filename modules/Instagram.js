@@ -4,11 +4,23 @@ var storage = require('node-persist');
 var qs = require('querystring');
 var async = require('async');
 var fs = require('fs');
+var winston = require('winston');
+
+var repeat = require('./repeat');
 var TileImage = require('./TileImage');
 var config = require('../config');
 
 
 storage.initSync();
+
+
+var logger = new (winston.Logger)({
+	transports: [
+		//new (winston.transports.Console)({colorize: true, timestamp: true}),
+		new (winston.transports.File)({ filename: config.instagram.logfile, timestamp: true  })
+	]
+});
+
 
 var Instagram = function() {
 
@@ -19,19 +31,7 @@ var Instagram = function() {
 		throw new Exception('Must provide a client_id');
 
 	var self = this;
-	self.settings = storage.getItem("instagram") || {min_tag_id: null};
-
-
-	var polling_interval = 5000;
-	this.start = function() {
-		var _poll = function(err){
-			self.poll(function(err){
-				if(err) console.log(err);
-				else setTimeout(_poll, polling_interval);
-			});
-		}
-		_poll();
-	}
+	self.settings = storage.getItem("instagram") || { min_tag_id: null };
 
 
 	this.fetch_json = function(url, callback) {
@@ -39,11 +39,10 @@ var Instagram = function() {
 			if (error) {
 				callback(error, null);
 			} else if(response.statusCode != 200) {
-				callback(response.statusCode, null);
+				callback("Couldn't fetch json: status code "+response.statusCode, null);
 			} else {
 				try {
 					var json = JSON.parse(body);
-					//console.log(util.inspect(json));
 					callback(null, json);
 				} catch(err) {
 					callback(err);
@@ -58,6 +57,7 @@ var Instagram = function() {
 			text = media.caption.text;
 		}
 
+		logger.log("info", media.images.low_resolution.url);
 		var info = {
 			"id": media.id,
 			"text": text,
@@ -85,20 +85,22 @@ var Instagram = function() {
 					self.settings.min_tag_id = result.pagination.min_tag_id;
 					storage.setItem("instagram", self.settings);
 				}
-				if(result.data.length) 
-					console.log("Instagram: Found "+result.data.length+" results");
+		
+				logger.log("info", "Instagram: Found %s results", result.data.length);
 
 				async.eachSeries(result.data, self.process_item, callback);
 			}
 		});
 	}
 
+
 	// http://stackoverflow.com/questions/20625173/how-does-instagrams-get-tags-tag-media-recent-pagination-actually-work
 	this.poll = function(callback) {
 		
 		var query = config.instagram.query;
-		//console.log('instagram.poll');
+
 		process.stdout.write("ig-");
+		logger.info("==Begin Instagram Poll==");
 		
 		var options = {
 			'client_secret': config.instagram.client_secret, 
@@ -109,9 +111,18 @@ var Instagram = function() {
 			options.min_tag_id = self.settings.min_tag_id;
 
 		var url = util.format("https://api.instagram.com/v1/tags/%s/media/recent?%s", query, qs.stringify(options));
-		//console.log(url);
+		logger.info("Fetching %s", url);
 		self.process_url(url, true, 0, callback);
 	}
+
+
+
+	self.running = true;
+	repeat(self.poll, config.instagram.polling_pause, function(err){
+		logger.error("Instagram is exiting because of an error:")
+		logger.error(err);
+		self.running = false;
+	});
 }
 
 module.exports = Instagram;

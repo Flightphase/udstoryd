@@ -1,15 +1,25 @@
 var util = require('util');
 var storage = require('node-persist');
-var graph = require('fbgraph');
 var request = require('request');
 var qs = require('querystring');
 var async = require('async');
 var fs = require('fs');
+var winston = require('winston');
+var graph = require('fbgraph');
+
+var repeat = require('./repeat');
 var TileImage = require('./TileImage');
 var config = require('../config');
 
-
 storage.initSync();
+
+
+var logger = new (winston.Logger)({
+	transports: [
+	//new (winston.transports.Console)({colorize: true, timestamp: true}),
+	new (winston.transports.File)({ filename: config.facebook.logfile, timestamp: true  })
+	]
+});
 
 var Facebook = function(options) {
 
@@ -23,18 +33,6 @@ var Facebook = function(options) {
 	self.settings = storage.getItem('facebook') || { last_poll: (new Date()).getDate()-7 };
 	
 
-	var polling_interval = 5000;
-	this.start = function() {
-		var _poll = function(err){
-			self.poll(function(err){
-				if(err) console.log(err);
-				else setTimeout(_poll, polling_interval);
-			});
-		}
-		_poll();
-	}
-
-
 	var access_token = null;
 	this.get_access_token = function(done) {
 		var query = {
@@ -44,11 +42,13 @@ var Facebook = function(options) {
 		};
 
 		var request = '/oauth/access_token?'+qs.stringify(query);
+		logger.info("Fetching "+request);
+
 		graph.get(request, function(err, res) {
 			if(err) done(err)
 			else {
 				access_token = res.access_token;
-				//console.log("got facebook access token: "+access_token)
+				logger.info("got facebook access token: "+access_token)
 				done();
 			}
 		});
@@ -62,6 +62,7 @@ var Facebook = function(options) {
 			return;
 		}
 
+		logger.info("fetching: "+post.full_picture);
 		var info = {
 			"id": post.id,
 			"url": post.full_picture,
@@ -87,8 +88,9 @@ var Facebook = function(options) {
 			});
 			return;
 		}
+
 		process.stdout.write("fb-");
-		//console.log("facebook.poll");
+		logger.info("==Begin Facebook Poll==");
 	
 		var data = {
 			fields: "id,name,type,created_time,from,full_picture,message",
@@ -97,7 +99,7 @@ var Facebook = function(options) {
 		};
 
 		var request = util.format('/%s/feed?%s', config.facebook.page_id, qs.stringify(data));
-		//console.log(request);
+		logger.info("Fetching "+request);
 
 		graph.get(request, function(err, res){
 			if(err) callback(err);
@@ -119,6 +121,16 @@ var Facebook = function(options) {
 			}
 		});
 	}
+
+
+
+	self.running = true;
+	repeat(self.poll, config.facebook.polling_pause, function(err){
+		logger.error("Facebook is exiting because of an error:")
+		logger.error(err);
+		self.running = false;
+	})
+
 }
 
 module.exports = Facebook;

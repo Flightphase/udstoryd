@@ -27,3 +27,7 @@ make
 make install
 
 ````
+
+
+## Useful Links
+- [Strategy for catching all tweets with a given hashtag](https://dev.twitter.com/discussions/28068)

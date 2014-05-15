@@ -17,7 +17,15 @@
     <![endif]-->
   </head>
   <body>
-    
+    <h1><%= title %></h1>
+
+
+    <% photos.forEach(function(photo){ %>
+
+		<img src="<%= photo %>" />
+
+	<% }); %>
+
 
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
