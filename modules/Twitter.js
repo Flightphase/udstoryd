@@ -9,17 +9,10 @@ var winston = require('winston');
 var Twit = require('twit')
 
 
+var makefile = require('./makefile');
 var repeat = require('./repeat');
 var TileImage = require('./TileImage');
 var config = require('../config');
-
-
-var logger = new (winston.Logger)({
-	transports: [
-		//new (winston.transports.Console)({colorize: true, timestamp: true}),
-		new (winston.transports.File)({ filename: config.twitter.logfile, timestamp: true  })
-	]
-});
 
 
 // About search/tweets and statuses/filter
@@ -27,6 +20,9 @@ var logger = new (winston.Logger)({
 
 
 var Twitter = function() {
+	console.log("Constructing Twitter");
+
+	var self = this;
 
 	if(!config.twitter.hasOwnProperty('consumer_key'))
 		throw new Exception('Must provide a client_id');
@@ -41,10 +37,26 @@ var Twitter = function() {
 		throw new Exception('Must provide a client_id');
 
 
-	var T = new Twit(config.twitter);
-	var self = this;
+	makefile.makefileSync(config.twitter.logfile);
+
+	var logger = new (winston.Logger)({
+		transports: [
+			//new (winston.transports.Console)({colorize: true, timestamp: true}),
+			new (winston.transports.File)({ filename: config.twitter.logfile, timestamp: true  })
+		]
+	});
+
+	self.logger = logger;
+
+	storage.initSync();
 
 	self.settings = storage.getItem('twitter') || { refresh_url: null };
+
+
+	var T = new Twit(config.twitter);
+
+
+
 
 
 	this.stream = function() {
@@ -138,11 +150,12 @@ var Twitter = function() {
 		    	var statuses = _.filter(data.statuses, function(status){
 		    		return status.entities.hasOwnProperty("media");
 		    	})
-		    	//console.log("Twitter found "+data.statuses.length+"/"+statuses.length+" statuses");
+		    	logger.info("Twitter found "+data.statuses.length+"/"+statuses.length+" statuses");
 			    async.eachSeries(statuses, self.process_status, function(err){
 			    	if(err) callback(err);
 			    	else {
 						if(data.search_metadata.refresh_url) {
+							logger.info(data.search_metadata.refresh_url);
 							self.settings.refresh_url = data.search_metadata.refresh_url;
 							storage.setItem('twitter', self.settings);
 						}
@@ -163,3 +176,5 @@ var Twitter = function() {
 
 
 module.exports = Twitter;
+
+

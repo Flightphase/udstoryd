@@ -1,0 +1,1 @@
+- If the app is run from two different locations, the persist files aren't present, causing the same images to be loaded over and over.  Consider storing the node-persist files in the dropbox?

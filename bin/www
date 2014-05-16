@@ -1,9 +1,51 @@
 #!/usr/bin/env node
+var _ = require('underscore');
 var debug = require('debug')('my-application');
 var app = require('../udstoryd');
+var services = require('../modules/services')
+
 
 app.set('port', process.env.PORT || 3000);
 
 var server = app.listen(app.get('port'), function() {
 	debug('Express server listening on port ' + server.address().port);
+});
+
+var io = require('socket.io').listen(server, {'log': false});
+
+io.sockets.on('connection', function (socket) {
+
+	Object.keys(services).forEach(function(key){
+		// services[key].logger.stream({start: -1}).on('log', function(log){
+		// 	log.service = key;
+		// 	socket.emit('log', log);
+		// });
+
+		var options = {
+			from: new Date - 60 * 60 * 1000,
+			until: new Date,
+			start: 50,
+			limit: 50,
+			order: 'asc',
+			fields: ['message', 'level', 'timestamp', 'meta']
+		};
+		services[key].logger.query(options, function(err, results){
+			if(err) console.log(err);
+			else results.file.forEach(function(log){
+				log.service = key;
+				socket.emit('log', log);
+			});
+		});
+
+
+		services[key].logger.on('logging', function (transport, level, msg, meta) {
+			var keys = ["service", "level", "message", "timestamp", "meta"];
+			var values = [key, level, msg, new Date(), meta];
+			socket.emit('log', _.object(keys, values));
+		});
+	});
+
+	socket.on('hello', function (data) {
+		console.log(data);
+	});
 });

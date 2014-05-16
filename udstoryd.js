@@ -10,15 +10,13 @@ var path = require("path");
 var glob = require("glob");
 var async = require("async");
 var gm = require('gm');
+var fs = require('fs');
 var querystring = require('querystring');
 var wrap = require('wordwrap')(25);
-var TileImage = require('./modules/TileImage');
-var Instagram = require('./modules/Instagram');
-var Facebook = require('./modules/Facebook');
-var Twitter = require('./modules/Twitter');
-var config = require('./config')
-
-
+var makefile = require('./modules/makefile')
+var services = require('./modules/services')
+var config = require('./config');
+[config.download_dir, config.idle_dir, config.captions_dir].forEach(makefile.makedirSync);
 
 var app = express();
 
@@ -38,9 +36,6 @@ app.use(app.router);
 
 
 
-var instagram = new Instagram();
-var facebook = new Facebook();
-var twitter = new Twitter();
 
 
 
@@ -57,16 +52,6 @@ app.get('/', function(req, res){
     res.render('index', {'title': "udstoryd"});
 });
 
-app.get('/images', function(req, res){
-    var pattern = config.download_dir+"/*.jpg";
-    glob(pattern, {}, function(err, files){
-        var photos = files.map(function(file){
-            return '/img?name='+path.basename(file, ".jpg");
-        });
-        res.render('index', {'title': "UD Story Daemon", 'photos': photos});
-    });
-});
-
 app.get('/status/facebook', function(req, res){
     if(facebook.running) res.send("ok");
     else res.send("down");
@@ -80,6 +65,18 @@ app.get('/status/twitter', function(req, res){
 app.get('/status/instagram', function(req, res){
     if(instagram.running) res.send("ok");
     else res.send("down");
+});
+
+
+/*
+app.get('/images', function(req, res){
+    var pattern = config.download_dir+"/*.jpg";
+    glob(pattern, {}, function(err, files){
+        var photos = files.map(function(file){
+            return '/img?name='+path.basename(file, ".jpg");
+        });
+        res.render('index', {'title': "UD Story Daemon", 'photos': photos});
+    });
 });
 
 
@@ -106,10 +103,7 @@ app.get('/img', function(req, res){
        		});
     });
 });
-
-
-
-
+*/
 
 
 

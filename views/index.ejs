@@ -8,7 +8,13 @@
 
     <!-- Bootstrap -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
-
+    <style>
+    .service .log {
+    	height: 550px;
+    	overflow: scroll;
+    	font-size: 10px;
+    }
+    </style>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -18,11 +24,66 @@
   </head>
   <body>
     
+  	   <div class="container">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div id="twitter" class="col-md-4 service">
+          <h2>Twitter</h2>
+           <div class="log"></div>
+          <!--<p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>-->
+        </div>
+        <div id="facebook" class="col-md-4 service">
+          <h2>Facebook</h2>
+          <div class="log"></div>
+          <!--<p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>-->
+       </div>
+        <div id="instagram" class="col-md-4 service">
+          <h2>Instagram</h2>
+           <div class="log"></div>
+          <!--<p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>-->
+        </div>
+      </div>
 
+      <hr>
 
+      <footer>
+        <p>&copy; Company 2014</p>
+      </footer>
+    </div> <!-- /container -->
+
+    <script src="/js/sprintf.min.js"></script>
+    <script src="/js/moment.min.js"></script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="/js/bootstrap.min.js"></script>
+
+
+    <script src="/socket.io/socket.io.js"></script>
+	<script>
+	$(function(){
+
+		var socket = io.connect('http://localhost');
+		socket.emit('hello', { now: new Date() });
+
+		// silly, debug, verbose, info, warn, error
+		var colors = {"info": 'black', "error": "red", "warn": "orange"};
+		socket.on('log', function (data) {
+			//console.log(data.service);
+			var date = moment(data.timestamp).format('MM.D, h:mm:ss a');
+
+			var logline = sprintf('<div style="color: %s">[%s] %s</div>', colors[data.level], date, data.message); // Hello Dolly
+			var elem = $("#"+data.service+" .log");
+			elem.append(logline);
+			var div = elem.get(0);
+
+
+			div.scrollTop = div.scrollHeight;
+
+		});
+
+	})
+	</script>
+
   </body>
 </html>

@@ -6,23 +6,18 @@ var async = require('async');
 var fs = require('fs');
 var winston = require('winston');
 
+
+var makefile = require('./makefile');
 var repeat = require('./repeat');
 var TileImage = require('./TileImage');
 var config = require('../config');
 
 
-storage.initSync();
-
-
-var logger = new (winston.Logger)({
-	transports: [
-		//new (winston.transports.Console)({colorize: true, timestamp: true}),
-		new (winston.transports.File)({ filename: config.instagram.logfile, timestamp: true  })
-	]
-});
-
 
 var Instagram = function() {
+	console.log("Constructing Instagram");
+
+	var self = this;
 
 	if(!config.instagram.hasOwnProperty('client_id'))
 		throw new Exception('Must provide a client_id');
@@ -30,8 +25,21 @@ var Instagram = function() {
 	if(!config.instagram.hasOwnProperty('client_secret'))
 		throw new Exception('Must provide a client_id');
 
-	var self = this;
+	storage.initSync();
+
 	self.settings = storage.getItem("instagram") || { min_tag_id: null };
+
+	makefile.makefileSync(config.instagram.logfile);
+
+	var logger = new (winston.Logger)({
+		transports: [
+			//new (winston.transports.Console)({colorize: true, timestamp: true}),
+			new (winston.transports.File)({ filename: config.instagram.logfile, timestamp: true  })
+		]
+	});
+
+	self.logger = logger;
+
 
 
 	this.fetch_json = function(url, callback) {

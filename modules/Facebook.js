@@ -7,21 +7,16 @@ var fs = require('fs');
 var winston = require('winston');
 var graph = require('fbgraph');
 
+var makefile = require('./makefile');
 var repeat = require('./repeat');
 var TileImage = require('./TileImage');
 var config = require('../config');
 
-storage.initSync();
-
-
-var logger = new (winston.Logger)({
-	transports: [
-	//new (winston.transports.Console)({colorize: true, timestamp: true}),
-	new (winston.transports.File)({ filename: config.facebook.logfile, timestamp: true  })
-	]
-});
 
 var Facebook = function(options) {
+	console.log("Constructing Facebook");
+
+	var self = this;
 
 	if(!config.facebook.hasOwnProperty('client_id'))
 		throw new Exception('Must provide a client_id');
@@ -29,11 +24,26 @@ var Facebook = function(options) {
 	if(!config.facebook.hasOwnProperty('client_secret'))
 		throw new Exception('Must provide a client_id');
 
-	var self = this;
+	storage.initSync();
+
 	self.settings = storage.getItem('facebook') || { last_poll: (new Date()).getDate()-7 };
 	
 
+	makefile.makefileSync(config.facebook.logfile);
+
+	var logger = new (winston.Logger)({
+		transports: [
+		//new (winston.transports.Console)({colorize: true, timestamp: true}),
+		new (winston.transports.File)({ filename: config.facebook.logfile, timestamp: true  })
+		]
+	});
+	self.logger = logger;
+
 	var access_token = null;
+
+
+
+
 	this.get_access_token = function(done) {
 		var query = {
 			  client_id: config.facebook.client_id
@@ -129,7 +139,7 @@ var Facebook = function(options) {
 		logger.error("Facebook is exiting because of an error:")
 		logger.error(err);
 		self.running = false;
-	})
+	});
 
 }
 
