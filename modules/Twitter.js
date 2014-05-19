@@ -112,11 +112,12 @@ var Twitter = function() {
 		var photos = _.filter(status.entities.media, function(media){ return media.type=='photo'; });
 		
 		if(photos.length==0) {
+			logger.warn("No photos found in media tweet?")
 			callback();
 			return;
 		}
+		var url = photos[0].media_url;
 
-		var url = photos.pop().media_url;
 		logger.info("Fetching "+url);
 
 		var info = {

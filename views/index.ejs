@@ -63,7 +63,7 @@
 	<script>
 	$(function(){
 
-		var socket = io.connect('http://localhost');
+		var socket = io.connect();
 		socket.emit('hello', { now: new Date() });
 
 		// silly, debug, verbose, info, warn, error
