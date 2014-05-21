@@ -28,17 +28,17 @@
       <!-- Example row of columns -->
       <div class="row">
         <div id="twitter" class="col-md-4 service">
-          <h2>Twitter</h2>
+          <h2 class="servicename">Twitter</h2>
            <div class="log"></div>
           <!--<p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>-->
         </div>
         <div id="facebook" class="col-md-4 service">
-          <h2>Facebook</h2>
+          <h2 class="servicename">Facebook</h2>
           <div class="log"></div>
           <!--<p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>-->
        </div>
         <div id="instagram" class="col-md-4 service">
-          <h2>Instagram</h2>
+          <h2 class="servicename">Instagram</h2>
            <div class="log"></div>
           <!--<p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>-->
         </div>
@@ -62,6 +62,19 @@
     <script src="/socket.io/socket.io.js"></script>
 	<script>
 	$(function(){
+		/*
+		var services = ["facebook", "instagram", "twitter"];
+		! function statuscheck(){
+			services.forEach(function(service){
+				var url = "/status?sertice="+service;
+				$.get(url, function(data, status){
+					console.log(service+": Data: " + data + "\nStatus: " + status);
+					setTimeout(statuscheck, 1000);
+				});
+			});
+		}();
+		*/
+
 
 		var socket = io.connect();
 		socket.emit('hello', { now: new Date() });
@@ -81,6 +94,13 @@
 			div.scrollTop = div.scrollHeight;
 
 		});
+
+		socket.on('status', function(data){
+			var elem = $("#"+data.service+" .servicename");
+			var css = {};
+			css.color =  data.status ? "green" : "red";
+			elem.css(css);
+		})
 
 	})
 	</script>

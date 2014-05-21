@@ -52,19 +52,13 @@ app.get('/', function(req, res){
     res.render('index', {'title': "udstoryd"});
 });
 
-app.get('/status/facebook', function(req, res){
-    if(facebook.running) res.send("ok");
-    else res.send("down");
-});
-
-app.get('/status/twitter', function(req, res){
-    if(twitter.running) res.send("ok");
-    else res.send("down");
-});
-
-app.get('/status/instagram', function(req, res){
-    if(instagram.running) res.send("ok");
-    else res.send("down");
+app.get('/status', function(req, res){
+    var s = req.query.service;
+    if(services.hasOwnProperty(s) && services[s].running) {
+        res.send("ok");
+    } else {
+        res.send("no");
+    }
 });
 
 

@@ -112,8 +112,10 @@ var Facebook = function(options) {
 		logger.info("Fetching "+request);
 
 		graph.get(request, function(err, res){
-			if(err) callback(err);
-			else {
+			if(err) {
+				
+				callback(err);
+			} else {
 				if(res.data.length) 
 					console.log("Facebook: found "+res.data.length+" posts");
 
