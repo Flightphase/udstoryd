@@ -42,6 +42,9 @@ var Instagram = function() {
 
 
 
+
+
+
 	this.fetch_json = function(url, callback) {
 		request(url, function (error, response, body) {
 			if (error) {
@@ -101,7 +104,7 @@ var Instagram = function() {
 					storage.setItem("instagram", self.settings);
 				}
 		
-				logger.log("info", "Instagram: Found %s results", result.data.length);
+				logger.info("Found %s results", result.data.length);
 
 				async.eachSeries(result.data, self.process_item, callback);
 			}
@@ -115,7 +118,7 @@ var Instagram = function() {
 		var query = config.instagram.query;
 
 		process.stdout.write("ig-");
-		logger.info("==Begin Instagram Poll==");
+		//logger.info("==Begin Instagram Poll==");
 		
 		var options = {
 			'client_secret': config.instagram.client_secret, 
@@ -126,7 +129,7 @@ var Instagram = function() {
 			options.min_tag_id = self.settings.min_tag_id;
 
 		var url = util.format("https://api.instagram.com/v1/tags/%s/media/recent?%s", query, qs.stringify(options));
-		logger.info("Fetching %s", url);
+		logger.info("Fetching "+url);
 		self.process_url(url, true, 0, callback);
 	}
 

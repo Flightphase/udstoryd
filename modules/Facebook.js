@@ -6,6 +6,7 @@ var async = require('async');
 var fs = require('fs');
 var winston = require('winston');
 var graph = require('fbgraph');
+var _ = require('underscore');
 
 var makefile = require('./makefile');
 var repeat = require('./repeat');
@@ -65,9 +66,26 @@ var Facebook = function(options) {
 	}
 
 
+	this.is_blacklisted = function(post) {
+
+		if(_.contains(config.facebook.blacklist.names, post.from.name)) {
+			return true;
+		}
+
+		return false;
+	}
+
 	this.process_post = function(post, callback) {
 
+		//console.log(post);
+
 		if(!post.hasOwnProperty('full_picture')) {
+			callback();
+			return;
+		}
+
+		if(self.is_blacklisted(post)) {
+			logger.warn("Encountered a blacklisted post");
 			callback();
 			return;
 		}
@@ -100,7 +118,7 @@ var Facebook = function(options) {
 		}
 
 		process.stdout.write("fb-");
-		logger.info("==Begin Facebook Poll==");
+		//logger.info("==Begin Facebook Poll==");
 	
 		var data = {
 			fields: "id,name,type,created_time,from,full_picture,message",
@@ -109,7 +127,7 @@ var Facebook = function(options) {
 		};
 
 		var request = util.format('/%s/feed?%s', config.facebook.page_id, qs.stringify(data));
-		logger.info("Fetching "+request);
+		logger.info("Fetching feed", data);
 
 		graph.get(request, function(err, res){
 			if(err) {

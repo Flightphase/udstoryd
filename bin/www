@@ -18,12 +18,12 @@ io.sockets.on('connection', function (socket) {
 	var intervals = [];
 
 	Object.keys(services).forEach(function(key){
-		/*
+		
 		services[key].logger.stream({start: -1}).on('log', function(log){
 			log.service = key;
 			socket.emit('log', log);
 		});
-
+		/*
 		var options = {
 			from: new Date - 60 * 60 * 1000,
 			until: new Date,

@@ -16,6 +16,7 @@ var wrap = require('wordwrap')(25);
 var makefile = require('./modules/makefile')
 var services = require('./modules/services')
 var config = require('./config');
+
 [config.download_dir, config.idle_dir, config.captions_dir].forEach(makefile.makedirSync);
 
 var app = express();

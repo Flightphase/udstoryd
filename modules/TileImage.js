@@ -20,7 +20,6 @@ var TileImage = function(options) {
 
 	options = options || {};
 	var self = this;
-	//self.local_path = options.local_path || null;
 	var font_size = 18;
 	var word_wrap = 24;
 	var wrap = wordwrap(24);
@@ -29,70 +28,54 @@ var TileImage = function(options) {
 	
 
 	self.download = function(options, callback) {
-		self.local_path = util.format("%s/%s.jpg", config.download_dir, options.id);
-		
-		if(fs.existsSync(self.local_path)) {
+
+		self.photo_path = util.format("%s/%s.jpg", config.download_dir, options.id);
+		self.caption_path =  util.format('%s/%s.jpg', config.captions_dir, options.id);
+
+		if(fs.existsSync(self.photo_path)) {
 			logger.warn("WARNING: fetched an image twice!");
 		}
 		
 		logger.info("remote_url = "+options.url);
-		logger.info("local_path = "+self.local_path);
+		logger.info("local_path = "+self.photo_path);
 
-		var size = { width: 110, height: 110 };
+		// http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html
+		var tags = {
+			"Headline": util.format("%s: %s", options.source, options.author), 
+			"Comment": options.text, 
+			"Caption": options.text, 
+			"UserComment": options.text,
+			"ImageDescription": options.text,
+			"Artist": options.author, 
+			"OwnerName": options.author,
+			"Title": options.source,
+			"Software": options.source
+		};
 
 		var download_small = function(done) {
 
 			var width = 110;
 			var height = 110;
 			gm(request(options.url))
+				.quality(100)
 				.resize(width+"^", height+"^")
 				.gravity('Center')
 				.crop(width, height)
-				.write(self.local_path, done)
-
-			//console.log("get_small");
-			// gm(request(options.url))
-			// 	.resize(size.width+"^", size.height+"^")
-			// 	.gravity('Center')
-			// 	.crop(size.width, size.height)
-			// 	.fill(color)
-			// 	.drawRectangle(0, 0, size.width*0.1, size.height)
-			// 	.write(self.local_path, done);
+				.write(self.photo_path, function(err){
+					if(err) done(err);
+					else self.setTags(tags, self.photo_path, done);
+				});
 		}
-
-
-		// to do: combine this into one command!
-		// http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html
-		var set_tags = function(done){
-			//console.log("set_tags");
-			var tags = {
-				"Headline": util.format("%s: %s", options.source, options.author), 
-				"Comment": options.text, 
-				"Caption": options.text, 
-				"UserComment": options.text,
-				"ImageDescription": options.text,
-				"Artist": options.author, 
-				"OwnerName": options.author,
-				"Title": options.source,
-				"Software": options.source
-			};
-
-			async.eachSeries(Object.keys(tags), function(tag, next){
-				self.setTag(tag, tags[tag], next);
-			}, done);
-		}
-
 
 		var make_caption = function(done) {
 			//console.log("make_caption");
 			var color = colors[Math.floor(Math.random()*colors.length)];
-			var captions_path = util.format('%s/%s.png', config.captions_dir, options.id);
 			var width = 220;
 			var height = 220;
 
-
 			// Create the overall image
-		    var img = gm(self.local_path)
+		    var img = gm(self.photo_path)
+		    	.quality(100)
 		        .gravity('NorthWest')
 		        .background(color)
 		        .extent(width, height)
@@ -116,20 +99,38 @@ var TileImage = function(options) {
 		    img.fontSize(14)
 		        .drawText(120, 16, options.source)
 		    
-		    img.write(captions_path, done);
+		    img.write(self.caption_path, function(err){
+				if(err) done(err);
+				else self.setTags(tags, self.caption_path, done);
+		    });
 		}
 
-		async.series([download_small, set_tags, make_caption], callback);
+		async.series([download_small, make_caption], callback);
+	}
+
+
+	/**
+	*	Set a bunch of exif tag
+	*/
+	self.setTags = function(tags, path, callback) {
+		var cmd = "exiftool -overwrite_original_in_place ";
+		for(var key in tags) {
+			var value = (tags[key] || "None").replace(/(["'$`\\])/g,'\\$1');
+			cmd += util.format("-%s=$'%s' ", key, value);
+		}
+		cmd += util.format("$'%s'", path);
+		//logger.info(cmd);
+		exec(cmd, callback);
 	}
 
 
 	/**
 	*	Set a single exif tag
 	*/
-	self.setTag = function(tag, value, callback) {
+	self.setTag = function(tag, value, path, callback) {
 		value = value || "None";
 		value = value.replace(/(["'$`\\])/g,'\\$1');
-		var cmd = util.format("exiftool -overwrite_original_in_place -%s=$'%s' $'%s'", tag, value, self.local_path);
+		var cmd = util.format("exiftool -overwrite_original_in_place -%s=$'%s' $'%s'", tag, value, path);
 		exec(cmd, callback);
 	}
 
@@ -138,7 +139,7 @@ var TileImage = function(options) {
 	*	Get a single EXIF tag
 	*/
 	self.getTag = function(tag, callback) {
-		var cmd = util.format('exiftool -S -%s "%s"', tag, self.local_path);
+		var cmd = util.format('exiftool -S -%s "%s"', tag, self.photo_path);
 		exec(cmd, function (err, stdout, stderr) {
 			if(err) callback(err);
 			else {
@@ -155,7 +156,7 @@ var TileImage = function(options) {
 	self.getAllTags = function(callback) {
 		callback = callback || function(){}
 		
-		var cmd = util.format('exiftool -json "%s"', self.local_path);
+		var cmd = util.format('exiftool -json "%s"', self.photo_path);
 		exec(cmd, function (err, stdout, stderr) {
 			if (err) callback(err)
 			else callback(null, JSON.parse(stdout));

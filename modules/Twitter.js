@@ -134,7 +134,7 @@ var Twitter = function() {
 	this.poll = function(callback) {
 
 		process.stdout.write("tw-");
-		logger.info("==Begin Twitter Poll==");
+		//logger.info("==Begin Twitter Poll==");
 
 		var options = (self.settings.refresh_url)
 			? qs.parse( self.settings.refresh_url.substr(1) )
@@ -148,12 +148,11 @@ var Twitter = function() {
 		    	var statuses = _.filter(data.statuses, function(status){
 		    		return status.entities.hasOwnProperty("media");
 		    	})
-		    	logger.info("Twitter found "+data.statuses.length+"/"+statuses.length+" statuses");
+		    	logger.info("Found "+data.statuses.length+"/"+statuses.length+" statuses");
 			    async.eachSeries(statuses, self.process_status, function(err){
 			    	if(err) callback(err);
 			    	else {
 						if(data.search_metadata.refresh_url) {
-							logger.info(data.search_metadata.refresh_url);
 							self.settings.refresh_url = data.search_metadata.refresh_url;
 							storage.setItem('twitter', self.settings);
 						}
