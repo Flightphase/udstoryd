@@ -52,10 +52,7 @@ var Twitter = function() {
 
 	self.settings = storage.getItem('twitter') || { refresh_url: null };
 
-
 	var T = new Twit(config.twitter);
-
-
 
 
 
@@ -129,7 +126,7 @@ var Twitter = function() {
 			"date": new Date(parseInt(status.created_at) * 1000)
 		};
 
-		var image = new TileImage();
+		var image = new TileImage({logger: logger});
 		image.download(info, callback);
 	}
 

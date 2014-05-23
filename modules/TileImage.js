@@ -4,7 +4,7 @@ var exec = require('child_process').exec;
 var async = require('async');
 var _ = require('underscore');
 var gm = require('gm');
-var wrap = require('wordwrap')(20);
+var wordwrap = require('wordwrap');
 var request = require('request');
 
 var config = require('../config');
@@ -20,11 +20,13 @@ var TileImage = function(options) {
 
 	options = options || {};
 	var self = this;
-	self.local_path = options.local_path || null;
+	//self.local_path = options.local_path || null;
+	var font_size = 18;
+	var word_wrap = 24;
+	var wrap = wordwrap(24);
 	
 	var logger = options.logger || console;
 	
-	// http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html
 
 	self.download = function(options, callback) {
 		self.local_path = util.format("%s/%s.jpg", config.download_dir, options.id);
@@ -33,8 +35,8 @@ var TileImage = function(options) {
 			logger.warn("WARNING: fetched an image twice!");
 		}
 		
-		logger.info("remote_url"+options.url);
-		logger.info("local_path="+self.local_path);
+		logger.info("remote_url = "+options.url);
+		logger.info("local_path = "+self.local_path);
 
 		var size = { width: 110, height: 110 };
 
@@ -58,7 +60,9 @@ var TileImage = function(options) {
 			// 	.write(self.local_path, done);
 		}
 
+
 		// to do: combine this into one command!
+		// http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html
 		var set_tags = function(done){
 			//console.log("set_tags");
 			var tags = {
@@ -78,32 +82,41 @@ var TileImage = function(options) {
 			}, done);
 		}
 
+
 		var make_caption = function(done) {
 			//console.log("make_caption");
 			var color = colors[Math.floor(Math.random()*colors.length)];
 			var captions_path = util.format('%s/%s.png', config.captions_dir, options.id);
 			var width = 220;
 			var height = 220;
+
+
+			// Create the overall image
 		    var img = gm(self.local_path)
 		        .gravity('NorthWest')
 		        .background(color)
 		        .extent(width, height)
 		        .fill(color)
 		        .drawRectangle(0, 0, 10, 110)
-		        .fontSize(20)
 		        .fill("#ffffff");
 
+		    // Draw Caption
 		    if(options.text) {
 		    	img.font(config.font_bold)
-		        .drawText(10, 130, wrap(options.text).split("\n").slice(0,3).join("\n"));
+		    		.fontSize(font_size)
+		        	.drawText(10, 130, wrap(options.text).split("\n").slice(0,3).join("\n"));
 			}
 			
+			// Draw the byline
 			img.font(config.font_medium)
-				.fontSize(20)
+				.fontSize(font_size)
 		        .drawText(10, height-15, "by "+options.author)
-		        .fontSize(14)
+		    
+		    // Draw the source in small text up top just for reference
+		    img.fontSize(14)
 		        .drawText(120, 16, options.source)
-		        .write(captions_path, done);
+		    
+		    img.write(captions_path, done);
 		}
 
 		async.series([download_small, set_tags, make_caption], callback);

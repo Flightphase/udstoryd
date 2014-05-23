@@ -1,1 +1,13 @@
+
+ ______  _____       ____    _____      
+/\__  _\/\  __`\    /\  _`\ /\  __`\    
+\/_/\ \/\ \ \/\ \   \ \ \/\ \ \ \/\ \   
+   \ \ \ \ \ \ \ \   \ \ \ \ \ \ \ \ \  
+    \ \ \ \ \ \_\ \   \ \ \_\ \ \ \_\ \ 
+     \ \_\ \ \_____\   \ \____/\ \_____\
+      \/_/  \/_____/    \/___/  \/_____/
+                                        
+
 - If the app is run from two different locations, the persist files aren't present, causing the same images to be loaded over and over.  Consider storing the node-persist files in the dropbox?
+- Make blacklists (for users, content, etc)
+- Fix log windows -- have them getch the last 1 day of stuff.

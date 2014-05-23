@@ -82,7 +82,7 @@ var Facebook = function(options) {
 			"date": new Date(post.created_time)
 		};
 
-		var image = new TileImage();
+		var image = new TileImage({logger: logger});
 		image.download(info, callback);
 	}
 

@@ -78,9 +78,10 @@ var Instagram = function() {
 			"date": new Date(parseInt(media.created_time) * 1000)
 		};
 
-		var image = new TileImage();
+		var image = new TileImage({logger: logger});
 		image.download(info, callback);
 	}
+
 
 	this.process_url = function(url, set_min_tag_id, level, callback) {
 		callback = callback || function(){}
