@@ -25,7 +25,7 @@ var Facebook = function(options) {
 	if(!config.facebook.hasOwnProperty('client_secret'))
 		throw new Exception('Must provide a client_id');
 
-	storage.initSync();
+	storage.initSync({ dir: config.persist_dir });
 
 	self.settings = storage.getItem('facebook') || { last_poll: (new Date()).getDate()-7 };
 	

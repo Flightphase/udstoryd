@@ -31,7 +31,7 @@ var TileImage = function(options) {
 	self.download = function(options, callback) {
 
 		self.photo_path = util.format("%s/%s.jpg", config.download_dir, options.id);
-		self.caption_path =  util.format('%s/%s.png', config.captions_dir, options.id);
+		self.caption_path =  util.format('%s/%s.jpg', config.captions_dir, options.id);
 		self.color = colors[Math.floor(Math.random()*colors.length)];
 
 		if(fs.existsSync(self.photo_path)) {

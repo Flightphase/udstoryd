@@ -48,7 +48,7 @@ var Twitter = function() {
 
 	self.logger = logger;
 
-	storage.initSync();
+	storage.initSync({ dir: config.persist_dir });
 
 	self.settings = storage.getItem('twitter') || { refresh_url: null };
 

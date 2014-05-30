@@ -25,7 +25,7 @@ var Instagram = function() {
 	if(!config.instagram.hasOwnProperty('client_secret'))
 		throw new Exception('Must provide a client_id');
 
-	storage.initSync();
+	storage.initSync({ dir: config.persist_dir });
 
 	self.settings = storage.getItem("instagram") || { min_tag_id: null };
 
