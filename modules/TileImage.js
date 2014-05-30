@@ -16,13 +16,14 @@ exec("which exiftool", function(err, stdout, stderr){
 
 var colors = ["#36cc24", "#fc3cb8", "#48bfec"];
 
+var url_regex =/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+
 var TileImage = function(options) {
 
 	options = options || {};
 	var self = this;
-	var font_size = 18;
-	var word_wrap = 24;
-	var wrap = wordwrap(24);
+	var font_size = 14;
+	var wrap = wordwrap(30);
 	
 	var logger = options.logger || console;
 	
@@ -30,7 +31,8 @@ var TileImage = function(options) {
 	self.download = function(options, callback) {
 
 		self.photo_path = util.format("%s/%s.jpg", config.download_dir, options.id);
-		self.caption_path =  util.format('%s/%s.jpg', config.captions_dir, options.id);
+		self.caption_path =  util.format('%s/%s.png', config.captions_dir, options.id);
+		self.color = colors[Math.floor(Math.random()*colors.length)];
 
 		if(fs.existsSync(self.photo_path)) {
 			logger.warn("WARNING: fetched an image twice!");
@@ -38,6 +40,9 @@ var TileImage = function(options) {
 		
 		logger.info("remote_url = "+options.url);
 		logger.info("local_path = "+self.photo_path);
+
+		// Filter out URLs
+		options.text = options.text.replace(url_regex, "");
 
 		// http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html
 		var tags = {
@@ -52,6 +57,7 @@ var TileImage = function(options) {
 			"Software": options.source
 		};
 
+
 		var download_small = function(done) {
 
 			var width = 110;
@@ -61,6 +67,8 @@ var TileImage = function(options) {
 				.resize(width+"^", height+"^")
 				.gravity('Center')
 				.crop(width, height)
+				.fill(self.color)
+				.drawRectangle(0, 0, 10, 110)
 				.write(self.photo_path, function(err){
 					if(err) done(err);
 					else self.setTags(tags, self.photo_path, done);
@@ -69,7 +77,7 @@ var TileImage = function(options) {
 
 		var make_caption = function(done) {
 			//console.log("make_caption");
-			var color = colors[Math.floor(Math.random()*colors.length)];
+			
 			var width = 220;
 			var height = 220;
 
@@ -77,9 +85,9 @@ var TileImage = function(options) {
 		    var img = gm(self.photo_path)
 		    	.quality(100)
 		        .gravity('NorthWest')
-		        .background(color)
+		        .background(self.color)
 		        .extent(width, height)
-		        .fill(color)
+		        .fill(self.color)
 		        .drawRectangle(0, 0, 10, 110)
 		        .fill("#ffffff");
 
