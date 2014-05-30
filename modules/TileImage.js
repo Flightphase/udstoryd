@@ -22,8 +22,8 @@ var TileImage = function(options) {
 
 	options = options || {};
 	var self = this;
-	var font_size = 14;
-	var wrap = wordwrap(30);
+	var font_size = 16;
+	var wrap = wordwrap(26);
 	
 	var logger = options.logger || console;
 	
