@@ -49,14 +49,9 @@ var Instagram = function() {
 		request(url, function (error, response, body) {
 			if (error) {
 				callback(error, null);
-			} else if(response.statusCode == 503) {
-				logger.warn("Received 503 Error. Over 5000 requests per hour?");
-				callback(null, null);
-			} else if(response.statusCode == 502) {
-				logger.warn("Received 502 Error.");
-				callback(null, null);
 			} else if(response.statusCode != 200) {
-				callback("Couldn't fetch json: status code "+response.statusCode, null);
+				logger.warn("Received "+response.statusCode+" status code! What's up?");
+				callback(null, null);
 			} else {
 				try {
 					var json = JSON.parse(body);
@@ -97,7 +92,8 @@ var Instagram = function() {
 			if(err) {
 				callback(err);
 			} else if(!result) {
-				callback("No result!");
+				logger.warn("No result received from fetch_json");
+				callback(null);
 			} else {
 				//if(result.pagination.hasOwnProperty('next_url'))
 				//	self.process_url(result.pagination.next_url, false, level+1);

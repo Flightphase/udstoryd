@@ -19,16 +19,15 @@ io.sockets.on('connection', function (socket) {
 
 	Object.keys(services).forEach(function(key){
 		
+		/*
 		services[key].logger.stream({start: -1}).on('log', function(log){
 			log.service = key;
 			socket.emit('log', log);
 		});
-		/*
+		*/
+
 		var options = {
-			from: new Date - 60 * 60 * 1000,
-			until: new Date,
-			start: 50,
-			limit: 50,
+			start: -10,
 			order: 'asc',
 			fields: ['message', 'level', 'timestamp', 'meta']
 		};
@@ -39,7 +38,8 @@ io.sockets.on('connection', function (socket) {
 				socket.emit('log', log);
 			});
 		});
-		*/
+
+
 
 		services[key].logger.on('logging', function (transport, level, msg, meta) {
 			var keys = ["service", "level", "message", "timestamp", "meta"];
