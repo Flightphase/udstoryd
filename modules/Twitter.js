@@ -55,7 +55,7 @@ var Twitter = function() {
 	var T = new Twit(config.twitter);
 
 
-
+	this.running = true;
 	this.stream = function() {
 		var stream = T.stream('statuses/filter', { track: config.twitter.query });
 		stream.on('tweet', function (tweet) {
@@ -63,7 +63,7 @@ var Twitter = function() {
 				self.process_status(tweet, function(err){
 					if(err) {
 						logger.error("err: "+err);
-						stream.stop()
+						//stream.stop()
 					}
 				});
 			}
@@ -72,6 +72,7 @@ var Twitter = function() {
 			logger.info("Emitted each time a limitation message comes into the stream.");
 		})
 		stream.on('disconnect', function (disconnectMessage) {
+			this.running = false;
 			logger.warn("Emitted when a disconnect message comes from Twitter.");
 		})
 		stream.on('connect', function (request) {
@@ -84,6 +85,9 @@ var Twitter = function() {
 			logger.warn("Emitted when a reconnection attempt to Twitter is scheduled.");
 		})
 	}
+
+	this.stream();
+
 
 	/*
 	// https://dev.twitter.com/docs/auth/application-only-auth
@@ -131,6 +135,7 @@ var Twitter = function() {
 	}
 
 
+	/*
 	this.poll = function(callback) {
 
 		process.stdout.write("tw-");
@@ -169,6 +174,7 @@ var Twitter = function() {
 		logger.error(err);
 		self.running = false;
 	})
+	*/
 }
 
 
