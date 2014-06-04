@@ -34,8 +34,12 @@ var Facebook = function(options) {
 
 	var logger = new (winston.Logger)({
 		transports: [
-		//new (winston.transports.Console)({colorize: true, timestamp: true}),
-		new (winston.transports.File)({ filename: config.facebook.logfile, timestamp: true  })
+			//new (winston.transports.Console)({colorize: true, timestamp: true}),
+			new (winston.transports.File)({ 
+				filename: config.facebook.logfile, 
+				timestamp: true,
+				maxsize: 1048576*5    
+			})
 		]
 	});
 	self.logger = logger;
