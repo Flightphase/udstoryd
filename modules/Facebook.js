@@ -27,9 +27,8 @@ var Facebook = function(options) {
 
 	storage.initSync({ dir: config.persist_dir });
 
-	self.settings = storage.getItem('facebook') || { last_poll: (new Date()).getDate()-7 };
+	self.settings = storage.getItem('facebook') || { last_poll: null };
 	
-
 	makefile.makefileSync(config.facebook.logfile);
 
 	var logger = new (winston.Logger)({
@@ -38,7 +37,7 @@ var Facebook = function(options) {
 			new (winston.transports.File)({ 
 				filename: config.facebook.logfile, 
 				timestamp: true,
-				maxsize: 1048576*5    
+				maxsize: 1048576 * 5    
 			})
 		]
 	});
@@ -71,11 +70,9 @@ var Facebook = function(options) {
 
 
 	this.is_blacklisted = function(post) {
-
 		if(_.contains(config.facebook.blacklist.names, post.from.name)) {
 			return true;
 		}
-
 		return false;
 	}
 
@@ -122,21 +119,24 @@ var Facebook = function(options) {
 		}
 
 		process.stdout.write("fb-");
-		//logger.info("==Begin Facebook Poll==");
 	
 		var data = {
 			fields: "id,name,type,created_time,from,full_picture,message",
-			access_token: access_token, 
-			since: Math.floor(new Date(self.settings.last_poll).getTime()/1000) 
+			access_token: access_token
 		};
+
+		if(self.settings.last_poll) {
+			data.since = Math.floor(new Date(self.settings.last_poll).getTime()/1000);
+		}
 
 		var request = util.format('/%s/feed?%s', config.facebook.page_id, qs.stringify(data));
 		logger.info("Fetching feed", data);
 
 		graph.get(request, function(err, res){
 			if(err) {
-				
-				callback(err);
+				logger.warn("Facebook Error: "+err);
+				logger.warn(res);
+				callback(null);
 			} else {
 				if(res.data.length) 
 					console.log("Facebook: found "+res.data.length+" posts");
@@ -162,6 +162,7 @@ var Facebook = function(options) {
 	repeat(self.poll, config.facebook.polling_pause, function(err){
 		logger.error("Facebook is exiting because of an error:")
 		logger.error(err);
+		console.log( new Error().stack )
 		self.running = false;
 	});
 

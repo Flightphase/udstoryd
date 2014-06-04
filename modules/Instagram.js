@@ -13,7 +13,6 @@ var TileImage = require('./TileImage');
 var config = require('../config');
 
 
-
 var Instagram = function() {
 	console.log("Constructing Instagram");
 
@@ -46,28 +45,36 @@ var Instagram = function() {
 
 
 
-
-
-
 	this.fetch_json = function(url, callback) {
+		callback = callback || function(){}
 		request(url, function (error, response, body) {
+			
 			if (error) {
 				callback(error, null);
 			} else if(response.statusCode != 200) {
 				logger.warn("Received "+response.statusCode+" status code! What's up?");
 				callback(null, null);
 			} else {
+				var json;
+
 				try {
-					var json = JSON.parse(body);
-					callback(null, json);
+					json = JSON.parse(body);
 				} catch(err) {
-					callback(err);
+					callback("Error parsing result json: "+body);
 				}
+
+				callback(null, json);
 			}
 		});
 	}
 
+
 	this.process_item = function(media, callback) {
+
+		var text = util.format('%s/%s.json', config.json_dir, media.id);
+		fs.writeFile(text, JSON.stringify(media, null, "\t"), function(err) {});
+
+
 		var text = "";
 		if(media.hasOwnProperty('caption') && media.caption) {
 			text = media.caption.text;
@@ -99,12 +106,18 @@ var Instagram = function() {
 				logger.warn("No result received from fetch_json");
 				callback(null);
 			} else {
-				//if(result.pagination.hasOwnProperty('next_url'))
-				//	self.process_url(result.pagination.next_url, false, level+1);
+				if(result.pagination.hasOwnProperty('next_url')) {
+					self.process_url(result.pagination.next_url, false, level+1);
+				}
+				if(set_min_tag_id) {
+					if(result.pagination.min_tag_id) {
+						self.settings.min_tag_id = result.pagination.min_tag_id;
+						logger.info("self.settings.min_tag_id="+self.settings.min_tag_id);
+						storage.setItem("instagram", self.settings);
+					} else {
+						logger.warn("No pagination.min_tag_id found in result!");
+					}
 
-				if(set_min_tag_id && result.pagination.min_tag_id) {
-					self.settings.min_tag_id = result.pagination.min_tag_id;
-					storage.setItem("instagram", self.settings);
 				}
 		
 				logger.info("Found %s results", result.data.length);
@@ -131,6 +144,7 @@ var Instagram = function() {
 		if(self.settings.min_tag_id)
 			options.min_tag_id = self.settings.min_tag_id;
 
+
 		var url = util.format("https://api.instagram.com/v1/tags/%s/media/recent?%s", query, qs.stringify(options));
 		logger.info("Fetching "+url);
 		self.process_url(url, true, 0, callback);
@@ -142,6 +156,7 @@ var Instagram = function() {
 	repeat(self.poll, config.instagram.polling_pause, function(err){
 		logger.error("Instagram is exiting because of an error:")
 		logger.error(err);
+		console.log( new Error().stack )
 		self.running = false;
 	});
 }

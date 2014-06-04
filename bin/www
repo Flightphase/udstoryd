@@ -1,9 +1,6 @@
 #!/usr/bin/env node
-var _ = require('underscore');
 var debug = require('debug')('my-application');
 var app = require('../udstoryd');
-var services = require('../modules/services')
-
 
 app.set('port', process.env.PORT || 3434);
 
@@ -11,7 +8,17 @@ var server = app.listen(app.get('port'), function() {
 	debug('Express server listening on port ' + server.address().port);
 });
 
+
+
+
+
+var _ = require('underscore');
+var services = require('../modules/services')
+var config = require('../config');
+var util = require('util');
 var io = require('socket.io').listen(server, {'log': false});
+var exec = require('child_process').exec;
+
 
 io.sockets.on('connection', function (socket) {
 
@@ -26,6 +33,7 @@ io.sockets.on('connection', function (socket) {
 		});
 		*/
 
+		/*
 		var options = {
 			start: -10,
 			order: 'asc',
@@ -38,7 +46,18 @@ io.sockets.on('connection', function (socket) {
 				socket.emit('log', log);
 			});
 		});
+		*/
 
+		var cmd = util.format("tail -n 50", config[key].logfile);
+		exec(cmd, function(err, stdout, stderr){
+			stdout.split("\n").forEach(function(line){
+				if(line) {
+					var data = JSON.parse(line);
+					data.service = key;
+					socket.emit('log', data);
+				}
+			});
+		});
 
 
 		services[key].logger.on('logging', function (transport, level, msg, meta) {

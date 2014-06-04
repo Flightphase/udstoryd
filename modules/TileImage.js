@@ -6,6 +6,7 @@ var _ = require('underscore');
 var gm = require('gm');
 var wordwrap = require('wordwrap');
 var request = require('request');
+var ent = require('ent');
 
 var config = require('../config');
 
@@ -15,16 +16,19 @@ exec("which exiftool", function(err, stdout, stderr){
 });
 
 var colors = ["#36cc24", "#fc3cb8", "#48bfec"];
-
 var url_regex =/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+var font_size = 16;
+var wrap = wordwrap(26);
+var num_lines = 4;
+
+
+
 
 var TileImage = function(options) {
 
 	options = options || {};
 	var self = this;
-	var font_size = 16;
-	var wrap = wordwrap(26);
-	
+
 	var logger = options.logger || console;
 	
 
@@ -42,7 +46,11 @@ var TileImage = function(options) {
 		logger.info("local_path = "+self.photo_path);
 
 		// Filter out URLs
-		options.text = options.text.replace(url_regex, "");
+		options.text = options.text.replace(url_regex, ""); // remove URLs
+		options.text = ent.decode(options.text); // decode HTML entities 
+		options.text = options.text.replace(/[^\w\d\s_.,!$@&"'#]/g, ' ');
+		
+		console.log(options.text);
 
 		// http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html
 		var tags = {
@@ -92,16 +100,17 @@ var TileImage = function(options) {
 		        .fill("#ffffff");
 
 		    // Draw Caption
+
 		    if(options.text) {
 		    	img.font(config.font_bold)
 		    		.fontSize(font_size)
-		        	.drawText(10, 130, wrap(options.text).split("\n").slice(0,3).join("\n"));
+		        	.drawText(10, 130, wrap(options.text).split("\n").slice(0,num_lines).join("\n"));
 			}
 			
 			// Draw the byline
 			img.font(config.font_medium)
 				.fontSize(font_size)
-		        .drawText(10, height-15, "by "+options.author)
+		        .drawText(10, height-8, "by "+options.author)
 		    
 		    // Draw the source in small text up top just for reference
 		    img.fontSize(14)

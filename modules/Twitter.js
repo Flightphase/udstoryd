@@ -60,37 +60,47 @@ var Twitter = function() {
 
 
 	this.running = true;
-	this.stream = function() {
-		var stream = T.stream('statuses/filter', { track: config.twitter.query });
-		stream.on('tweet', function (tweet) {
-			if(tweet.entities.hasOwnProperty("media")) {
-				self.process_status(tweet, function(err){
-					if(err) {
-						logger.error("err: "+err);
-						//stream.stop()
-					}
-				});
-			}
-		});
-		stream.on('limit', function (limitMessage) {
-			logger.info("Emitted each time a limitation message comes into the stream.");
-		})
-		stream.on('disconnect', function (disconnectMessage) {
-			this.running = false;
-			logger.warn("Emitted when a disconnect message comes from Twitter.");
-		})
-		stream.on('connect', function (request) {
-			logger.warn("Emitted when a connection attempt is made to Twitter. The http request object is emitted.");
-		})
-		stream.on('connected', function (response) {
-			logger.warn("Emitted when the response is received from Twitter. The http response object is emitted.");
-		})
-		stream.on('reconnect', function (request, response, connectInterval) {
-			logger.warn("Emitted when a reconnection attempt to Twitter is scheduled.");
-		})
-	}
+	logger.info("Starting stream for "+config.twitter.query);
 
-	this.stream();
+	var stream = T.stream('statuses/filter', { track: config.twitter.query });
+
+	stream.on('tweet', function (tweet) {
+		var url = util.format("https://twitter.com/%s/status/%s", tweet.user.screen_name, tweet.id_str);
+		logger.info('<a href="%s" target="_blank">Found a tweet</a>', url);
+
+		if(tweet.entities.hasOwnProperty("media")) {
+
+
+			var text = util.format('%s/%s.json', config.json_dir, tweet.id_str);
+			fs.writeFile(text, JSON.stringify(tweet, null, "\t"), function(err) {});
+
+			self.process_status(tweet, function(err){
+				if(err) {
+					logger.error("err: "+err);
+					//stream.stop()
+				}
+			});
+		} else {
+			logger.info("Tweet has no media");
+		}
+	});
+	stream.on('limit', function (limitMessage) {
+		logger.info("Emitted each time a limitation message comes into the stream.");
+	})
+	stream.on('disconnect', function (disconnectMessage) {
+		this.running = false;
+		logger.warn("Emitted when a disconnect message comes from Twitter.");
+	})
+	stream.on('connect', function (request) {
+		logger.info("Attempting to connect...");
+	})
+	stream.on('connected', function (response) {
+		logger.info("Connected!");
+	})
+	stream.on('reconnect', function (request, response, connectInterval) {
+		logger.warn("Attempitng to reconnect...");
+	})
+
 
 
 	/*
@@ -123,8 +133,7 @@ var Twitter = function() {
 		}
 		var url = photos[0].media_url;
 
-		logger.info("Fetching "+url);
-
+		//logger.info("Fetching "+url);
 		var info = {
 			"id": status.id,
 			"text": status.text,

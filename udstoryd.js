@@ -17,7 +17,7 @@ var makefile = require('./modules/makefile')
 var services = require('./modules/services')
 var config = require('./config');
 
-[config.download_dir, config.idle_dir, config.captions_dir, config.persist_dir].forEach(makefile.makedirSync);
+[config.download_dir, config.idle_dir, config.captions_dir, config.persist_dir, config.json_dir].forEach(makefile.makedirSync);
 
 var app = express();
 
