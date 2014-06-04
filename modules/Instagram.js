@@ -34,7 +34,11 @@ var Instagram = function() {
 	var logger = new (winston.Logger)({
 		transports: [
 			//new (winston.transports.Console)({colorize: true, timestamp: true}),
-			new (winston.transports.File)({ filename: config.instagram.logfile, timestamp: true  })
+			new (winston.transports.File)({ 
+				filename: config.instagram.logfile, 
+				timestamp: true,
+				maxsize: 1048576*5    
+			})
 		]
 	});
 
