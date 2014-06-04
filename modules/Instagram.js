@@ -112,15 +112,14 @@ var Instagram = function() {
 				if(set_min_tag_id) {
 					if(result.pagination.min_tag_id) {
 						self.settings.min_tag_id = result.pagination.min_tag_id;
-						logger.info("self.settings.min_tag_id="+self.settings.min_tag_id);
+						//logger.info("self.settings.min_tag_id="+self.settings.min_tag_id);
 						storage.setItem("instagram", self.settings);
 					} else {
 						logger.warn("No pagination.min_tag_id found in result!");
 					}
-
 				}
 		
-				logger.info("Found %s results", result.data.length);
+				//logger.info("Found %s results", result.data.length);
 
 				async.eachSeries(result.data, self.process_item, callback);
 			}
@@ -144,9 +143,8 @@ var Instagram = function() {
 		if(self.settings.min_tag_id)
 			options.min_tag_id = self.settings.min_tag_id;
 
-
-		var url = util.format("https://api.instagram.com/v1/tags/%s/media/recent?%s", query, qs.stringify(options));
-		logger.info("Fetching "+url);
+		var url = util.format('https://api.instagram.com/v1/tags/%s/media/recent?%s', query, qs.stringify(options));
+		logger.info('Fetching <a target="_blank" href="'+url+'">API endpoint</a>');
 		self.process_url(url, true, 0, callback);
 	}
 

@@ -56,13 +56,13 @@ var Facebook = function(options) {
 		};
 
 		var request = '/oauth/access_token?'+qs.stringify(query);
-		logger.info("Fetching "+request);
+		logger.info(util.format('Fetching <a target="_blank" href="https://graph.facebook.com/%s">OAuth token</a>', request));
 
 		graph.get(request, function(err, res) {
 			if(err) done(err)
 			else {
 				access_token = res.access_token;
-				logger.info("got facebook access token: "+access_token)
+				logger.info("got facebook access token")
 				done();
 			}
 		});
@@ -130,7 +130,9 @@ var Facebook = function(options) {
 		}
 
 		var request = util.format('/%s/feed?%s', config.facebook.page_id, qs.stringify(data));
-		logger.info("Fetching feed", data);
+		
+
+		logger.info(util.format('Fetching <a target="_blank" href="https://graph.facebook.com/%s">API feed</a>', request));
 
 		graph.get(request, function(err, res){
 			if(err) {
