@@ -48,7 +48,7 @@ io.sockets.on('connection', function (socket) {
 		});
 		*/
 
-		var cmd = util.format("tail -n 50", config[key].logfile);
+		var cmd = util.format("tail -n 100 %s", config[key].logfile);
 		exec(cmd, function(err, stdout, stderr){
 			stdout.split("\n").forEach(function(line){
 				if(line) {
