@@ -18,7 +18,7 @@ var config = require('../config');
 var util = require('util');
 var io = require('socket.io').listen(server, {'log': false});
 var exec = require('child_process').exec;
-
+var path = require('path');
 
 io.sockets.on('connection', function (socket) {
 
@@ -48,7 +48,11 @@ io.sockets.on('connection', function (socket) {
 		});
 		*/
 
-		var cmd = util.format("tail -n 100 %s", config[key].logfile);
+		// Get the last 5 lines of the most recently modified logfile that begins with [key]
+		var base = config[key].logfile.replace(".log", "");
+		var cmd = util.format('tail -n 100 "$(ls -t %s* | head -1)"', base);
+		console.log(cmd);
+
 		exec(cmd, function(err, stdout, stderr){
 			stdout.split("\n").forEach(function(line){
 				if(line) {

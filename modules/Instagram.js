@@ -109,13 +109,14 @@ var Instagram = function() {
 				if(result.pagination.hasOwnProperty('next_url')) {
 					self.process_url(result.pagination.next_url, false, level+1);
 				}
+
 				if(set_min_tag_id) {
 					if(result.pagination.min_tag_id) {
 						self.settings.min_tag_id = result.pagination.min_tag_id;
 						//logger.info("self.settings.min_tag_id="+self.settings.min_tag_id);
 						storage.setItem("instagram", self.settings);
 					} else {
-						logger.warn("No pagination.min_tag_id found in result!");
+						//logger.warn("No pagination.min_tag_id found in result!");
 					}
 				}
 		
