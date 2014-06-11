@@ -38,12 +38,13 @@ var TileImage = function(options) {
 		self.caption_path =  util.format('%s/%s.jpg', config.captions_dir, options.id);
 		self.color = colors[Math.floor(Math.random()*colors.length)];
 
-		if(fs.existsSync(self.photo_path)) {
+		if(fs.existsSync(self.caption_path)) {
 			logger.warn("WARNING: fetched an image twice!");
 		}
 		
 		logger.info("remote_url = "+options.url);
-		logger.info("local_path = "+self.photo_path);
+		logger.info("photo_path = "+self.photo_path);
+		logger.info("caption_path = "+self.caption_path);
 
 		// Filter out URLs
 		options.text = options.text.replace(url_regex, ""); // remove URLs
@@ -75,8 +76,8 @@ var TileImage = function(options) {
 				.resize(width+"^", height+"^")
 				.gravity('Center')
 				.crop(width, height)
-				.fill(self.color)
-				.drawRectangle(0, 0, 10, 110)
+				//.fill(self.color)
+				//.drawRectangle(0, 0, 10, 110)
 				.write(self.photo_path, function(err){
 					if(err) done(err);
 					else self.setTags(tags, self.photo_path, done);
