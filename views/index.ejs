@@ -45,6 +45,8 @@
       </div>
 
       <hr>
+      <p style="color: red;">Unmoderated Mode: <input id="unmoderated" type="checkbox" value="on" /></p> 
+      <hr />
 
       <footer>
         <p>&copy; Company 2014</p>
@@ -85,7 +87,16 @@
 			var css = {};
 			css.color =  data.status ? "green" : "red";
 			elem.css(css);
-		})
+		});
+
+    socket.on('unmoderated', function(data){
+      $("#unmoderated").prop('checked', data.checked);
+    });
+
+    $("#unmoderated").click(function(){
+      var checked = $("#unmoderated").prop('checked');
+      socket.emit('unmoderated', {checked: checked});
+    });
 	})
 	</script>
 

@@ -62,6 +62,9 @@ app.get('/status', function(req, res){
     }
 });
 
+// app.get('/unmoderated', function(req, res){
+//     res.send("on");
+// });
 
 /*
 app.get('/images', function(req, res){

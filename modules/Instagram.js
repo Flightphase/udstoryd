@@ -101,7 +101,8 @@ var Instagram = function() {
 
 		this.fetch_json(url, function(err, result){
 			if(err) {
-				callback(err);
+				logger.warn("Problem fetching json: "+err);
+				callback(null);
 			} else if(!result) {
 				logger.warn("No result received from fetch_json");
 				callback(null);
