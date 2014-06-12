@@ -32,3 +32,7 @@ make install
 ## Useful Links
 - [Strategy for catching all tweets with a given hashtag](https://dev.twitter.com/discussions/28068)
 - [Add NGINX repo on CentOS](http://wiki.nginx.org/Install) so that you can install the newest version
+
+
+Allow traffic to 3434
+sudo iptables -I INPUT 1 -p tcp --dport 3434 -j ACCEPT
