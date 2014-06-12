@@ -7,13 +7,14 @@ var gm = require('gm');
 var wordwrap = require('wordwrap');
 var request = require('request');
 var ent = require('ent');
+var S = require('string');
 
 var config = require('../config');
 
-exec("which exiftool", function(err, stdout, stderr){
-	if(!stdout) 
-		console.log("[Warning] Missing exiftool program on this system!");
-});
+// exec("which exiftool", function(err, stdout, stderr){
+// 	if(!stdout) 
+// 		console.log("[Warning] Missing exiftool program on this system!");
+// });
 
 var colors = ["#36cc24", "#fc3cb8", "#48bfec"];
 var url_regex =/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
@@ -34,16 +35,26 @@ var TileImage = function(options) {
 
 	self.download = function(options, callback) {
 
-		self.photo_path = util.format("%s/%s.jpg", config.download_dir, options.id);
-		self.caption_path =  util.format('%s/%s.jpg', config.captions_dir, options.id);
+		var unmoderated = fs.existsSync(config.unmoderated_flag);
+		self.photo_path = null;
+		self.caption_path = null;
 		self.color = colors[Math.floor(Math.random()*colors.length)];
 
-		if(fs.existsSync(self.photo_path)) {
+		if(unmoderated) {
+			self.photo_path = util.format("%s/%s.jpg", config.filler_dir, options.id);
+			self.caption_path =  util.format('%s/%s.jpg', config.idle_dir, options.id);
+		} else {
+			self.photo_path = util.format("%s/%s.jpg", config.download_dir, options.id);
+			self.caption_path =  util.format('%s/%s.jpg', config.captions_dir, options.id);
+		}
+
+		if(fs.existsSync(self.caption_path)) {
 			logger.warn("WARNING: fetched an image twice!");
 		}
 		
 		logger.info("remote_url = "+options.url);
-		logger.info("local_path = "+self.photo_path);
+		logger.info("photo_path = "+self.photo_path);
+		logger.info("caption_path = "+self.caption_path);
 
 		// Filter out URLs
 		options.text = options.text.replace(url_regex, ""); // remove URLs
@@ -75,8 +86,8 @@ var TileImage = function(options) {
 				.resize(width+"^", height+"^")
 				.gravity('Center')
 				.crop(width, height)
-				.fill(self.color)
-				.drawRectangle(0, 0, 10, 110)
+				//.fill(self.color)
+				//.drawRectangle(0, 0, 10, 110)
 				.write(self.photo_path, function(err){
 					if(err) done(err);
 					else self.setTags(tags, self.photo_path, done);
@@ -107,10 +118,12 @@ var TileImage = function(options) {
 		        	.drawText(10, 130, wrap(options.text).split("\n").slice(0,num_lines).join("\n"));
 			}
 			
+			var byline = S("by "+options.author).truncate(25, '').s;
+
 			// Draw the byline
 			img.font(config.font_medium)
 				.fontSize(font_size)
-		        .drawText(10, height-8, "by "+options.author)
+		        .drawText(10, 212, byline);
 		    
 		    // Draw the source in small text up top just for reference
 		    img.fontSize(14)

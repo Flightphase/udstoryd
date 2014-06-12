@@ -8,6 +8,7 @@ var winston = require('winston');
 var graph = require('fbgraph');
 var _ = require('underscore');
 
+
 var makefile = require('./makefile');
 var repeat = require('./repeat');
 var TileImage = require('./TileImage');
@@ -56,13 +57,13 @@ var Facebook = function(options) {
 		};
 
 		var request = '/oauth/access_token?'+qs.stringify(query);
-		logger.info("Fetching "+request);
+		logger.info(util.format('Fetching <a target="_blank" href="https://graph.facebook.com/%s">OAuth token</a>', request));
 
 		graph.get(request, function(err, res) {
 			if(err) done(err)
 			else {
 				access_token = res.access_token;
-				logger.info("got facebook access token: "+access_token)
+				logger.info("got facebook access token")
 				done();
 			}
 		});
@@ -91,11 +92,19 @@ var Facebook = function(options) {
 			return;
 		}
 
+		var text = "";
+		if(post.hasOwnProperty("message") && post.message) {
+			text = post.message;
+		}
+		if(post.hasOwnProperty("caption") && post.caption) {
+			text = post.caption;
+		}
+
 		logger.info("fetching: "+post.full_picture);
 		var info = {
 			"id": post.id,
 			"url": post.full_picture,
-			"text": post.message || "None",
+			"text": text,
 			"author": post.from.name,
 			"source": "Facebook",
 			"date": new Date(post.created_time)
@@ -121,7 +130,7 @@ var Facebook = function(options) {
 		process.stdout.write("fb-");
 	
 		var data = {
-			fields: "id,name,type,created_time,from,full_picture,message",
+			fields: "id,name,type,created_time,from,full_picture,message,caption",
 			access_token: access_token
 		};
 
@@ -130,7 +139,9 @@ var Facebook = function(options) {
 		}
 
 		var request = util.format('/%s/feed?%s', config.facebook.page_id, qs.stringify(data));
-		logger.info("Fetching feed", data);
+		
+
+		logger.info(util.format('Fetching <a target="_blank" href="https://graph.facebook.com/%s">API feed</a>', request));
 
 		graph.get(request, function(err, res){
 			if(err) {
