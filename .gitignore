@@ -27,3 +27,4 @@ node_modules
 
 *.sublime*
 /config.js
+login-info.md
